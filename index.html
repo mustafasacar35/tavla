@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 Denizli Cerrahisi Hastanesi 1. Geleneksel Tavla Turnuvası 🎲</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <img src="logo.jpg" alt="Logo" class="header-logo">
+                <h1>🎲 DENİZLİ CERRAHİSİ HASTANESİ<br>1. GELENEKSEL TAVLA TURNUVASI 🎲</h1>
+                <p class="subtitle">Canlı Çekilişler ve Eşleştirmeler</p>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showTab('overview')">📊 Genel Bakış</button>
+            <button class="nav-btn" onclick="showTab('schedule')">📅 Tarihler</button>
+            <button class="nav-btn" onclick="showTab('current-round')">🎮 Mevcut Tur</button>
+            <button class="nav-btn" onclick="showTab('standings')">🏆 Puan Tablosu</button>
+            <button class="nav-btn" onclick="showTab('admin')">⚙️ Yönetim</button>
+        </nav>
+
+        <!-- Overview Tab -->
+        <section id="overview" class="tab-content active">
+            <div class="overview-grid">
+                <div class="stat-card">
+                    <h3>👥 Katılımcılar</h3>
+                    <p class="stat-number" id="participant-count">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>🎯 Aktif Tur</h3>
+                    <p class="stat-number" id="current-round-num">1</p>
+                </div>
+                <div class="stat-card">
+                    <h3>🕐 Sonraki Çekilişe</h3>
+                    <p class="stat-time" id="next-draw-countdown">Yükleniyor...</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Katılımcı Listesi</h2>
+                <div id="participants-list" class="participants-list"></div>
+            </div>
+        </section>
+
+        <!-- Schedule Tab -->
+        <section id="schedule" class="tab-content">
+            <h2>📅 Turnuva Takvimi</h2>
+            <div id="schedule-list" class="schedule-list"></div>
+        </section>
+
+        <!-- Current Round Tab -->
+        <section id="current-round" class="tab-content">
+            <h2>🎮 <span id="round-title">1. Tur</span> Eşleştirmeleri</h2>
+            <div id="matches-container" class="matches-container"></div>
+        </section>
+
+        <!-- Standings Tab -->
+        <section id="standings" class="tab-content">
+            <h2>🏆 Puan Tablosu</h2>
+            <div id="standings-table" class="standings-table"></div>
+        </section>
+
+        <!-- Admin Tab -->
+        <section id="admin" class="tab-content">
+            <h2>⚙️ Turnuva Yönetimi Paneli</h2>
+            <div class="admin-panel">
+                <!-- Katılımcı Yönetimi -->
+                <div class="admin-section">
+                    <h3>👥 Katılımcı Yönetimi</h3>
+                    <div class="admin-form">
+                        <input type="text" id="participant-input" placeholder="Katılımcı adı..." class="input">
+                        <button onclick="addParticipant()" class="btn btn-primary">➕ Ekle</button>
+                        <button onclick="clearAllParticipants()" class="btn btn-danger">🗑️ Hepsini Sil</button>
+                    </div>
+                    <div id="participants-manager" class="participants-manager"></div>
+                </div>
+
+                <!-- Turnuva Ayarları -->
+                <div class="admin-section">
+                    <h3>📅 Turnuva Takvimi Ayarları</h3>
+                    <div class="rounds-manager" id="rounds-manager"></div>
+                    <button onclick="addRound()" class="btn btn-primary">➕ Yeni Tur Ekle</button>
+                </div>
+
+                <!-- Çekilişler -->
+                <div class="admin-section">
+                    <h3>🎯 Çekilişler</h3>
+                    <div id="manual-draw-section"></div>
+                    <button onclick="checkAndRun()" class="btn btn-success">🔄 Tüm Çekilişleri Kontrol Et</button>
+                </div>
+
+                <!-- Sonuç Giriş -->
+                <div class="admin-section">
+                    <h3>⚽ Maç Sonuçları</h3>
+                    <div id="match-result-input"></div>
+                </div>
+
+                <!-- Veri İşlemleri -->
+                <div class="admin-section">
+                    <h3>💾 Veri İşlemleri</h3>
+                    <button onclick="downloadData()" class="btn btn-secondary">📥 Veriyi İndir (JSON)</button>
+                    <button onclick="document.getElementById('file-input').click()" class="btn btn-secondary">📤 Veriyi Yükle</button>
+                    <button onclick="resetTournament()" class="btn btn-danger">🔴 Turnuvayı Sıfırla</button>
+                    <input type="file" id="file-input" style="display:none;" accept=".json" onchange="uploadData(event)">
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🎲 Tavla Turnuvası Sistemi | GitHub: <a href="https://github.com" target="_blank">tavla_cekilis</a></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
