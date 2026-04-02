@@ -33,6 +33,29 @@ function loadData() {
     } else {
         tournament = createNewTournament();
     }
+    
+    // Auto-backup every 5 minutes
+    if (!window.autoBackupInterval) {
+        window.autoBackupInterval = setInterval(() => {
+            autoBackupData();
+        }, 5 * 60 * 1000); // 5 dakikada bir
+    }
+}
+
+// Auto Backup Data
+function autoBackupData() {
+    const dataStr = JSON.stringify(tournament, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `tavla_backup_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('💾 Otomatik backup yapıldı!');
 }
 
 // Create new tournament structure

@@ -33,27 +33,33 @@
     }
   ],
   "participants": [
-    {
-      "id": 1,
-      "name": "Ahmet",
-      "wins": 0,
-      "losses": 0,
-      "eliminated": false
-    },
-    {
-      "id": 2,
-      "name": "Fatma",
-      "wins": 0,
-      "losses": 0,
-      "eliminated": false
-    },
-    {
-      "id": 3,
-      "name": "Mehmet",
-      "wins": 0,
-      "losses": 0,
-      "eliminated": false
-    }
+    { "id": 1, "name": "Ozan TÜRKMENOĞLU", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 2, "name": "Zeynep ARSLANTAS", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 3, "name": "Katılımcı 3", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 4, "name": "Katılımcı 4", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 5, "name": "Katılımcı 5", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 6, "name": "Katılımcı 6", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 7, "name": "Katılımcı 7", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 8, "name": "Katılımcı 8", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 9, "name": "Katılımcı 9", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 10, "name": "Katılımcı 10", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 11, "name": "Katılımcı 11", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 12, "name": "Katılımcı 12", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 13, "name": "Katılımcı 13", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 14, "name": "Katılımcı 14", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 15, "name": "Katılımcı 15", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 16, "name": "Katılımcı 16", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 17, "name": "Katılımcı 17", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 18, "name": "Katılımcı 18", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 19, "name": "Katılımcı 19", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 20, "name": "Katılımcı 20", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 21, "name": "Katılımcı 21", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 22, "name": "Katılımcı 22", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 23, "name": "Katılımcı 23", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 24, "name": "Katılımcı 24", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 25, "name": "Katılımcı 25", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 26, "name": "Katılımcı 26", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 27, "name": "Katılımcı 27", "wins": 0, "losses": 0, "eliminated": false }
   ],
   "standings": [],
   "lastUpdated": "2026-04-02T12:00:00Z"
