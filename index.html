@@ -69,46 +69,74 @@
 
         <!-- Admin Tab -->
         <section id="admin" class="tab-content">
-            <h2>⚙️ Turnuva Yönetimi Paneli</h2>
-            <div class="admin-panel">
-                <!-- Katılımcı Yönetimi -->
-                <div class="admin-section">
-                    <h3>👥 Katılımcı Yönetimi</h3>
-                    <div class="admin-form">
-                        <input type="text" id="participant-input" placeholder="Katılımcı adı..." class="input">
-                        <button onclick="addParticipant()" class="btn btn-primary">➕ Ekle</button>
-                        <button onclick="clearAllParticipants()" class="btn btn-danger">🗑️ Hepsini Sil</button>
+            <!-- Admin Login Screen -->
+            <div id="admin-login-screen" style="display: none;">
+                <div class="admin-login-box">
+                    <h2>🔐 Admin Paneli</h2>
+                    <p>Şifreni gir</p>
+                    <input type="password" id="admin-password" placeholder="Şifre..." class="input" onkeypress="if(event.key==='Enter') adminLogin()">
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="adminLogin()" class="btn btn-success">✅ Giriş Yap</button>
+                        <button onclick="cancelAdminLogin()" class="btn btn-danger">❌ İptal</button>
                     </div>
-                    <div id="participants-manager" class="participants-manager"></div>
                 </div>
+            </div>
 
-                <!-- Turnuva Ayarları -->
-                <div class="admin-section">
-                    <h3>📅 Turnuva Takvimi Ayarları</h3>
-                    <div class="rounds-manager" id="rounds-manager"></div>
-                    <button onclick="addRound()" class="btn btn-primary">➕ Yeni Tur Ekle</button>
+            <!-- Admin Panel (After Login) -->
+            <div id="admin-panel-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>⚙️ Turnuva Yönetimi Paneli</h2>
+                    <button onclick="adminLogout()" class="btn btn-danger">🚪 Çıkış Yap</button>
                 </div>
+                <div class="admin-panel">
+                    <!-- Katılımcı Yönetimi -->
+                    <div class="admin-section">
+                        <h3>👥 Katılımcı Yönetimi</h3>
+                        <div class="admin-form">
+                            <input type="text" id="participant-input" placeholder="Katılımcı adı..." class="input">
+                            <button onclick="addParticipant()" class="btn btn-primary">➕ Ekle</button>
+                            <button onclick="clearAllParticipants()" class="btn btn-danger">🗑️ Hepsini Sil</button>
+                        </div>
+                        <div id="participants-manager" class="participants-manager"></div>
+                    </div>
 
-                <!-- Çekilişler -->
-                <div class="admin-section">
-                    <h3>🎯 Çekilişler</h3>
-                    <div id="manual-draw-section"></div>
-                    <button onclick="checkAndRun()" class="btn btn-success">🔄 Tüm Çekilişleri Kontrol Et</button>
-                </div>
+                    <!-- Turnuva Ayarları -->
+                    <div class="admin-section">
+                        <h3>📅 Turnuva Takvimi Ayarları</h3>
+                        <div class="rounds-manager" id="rounds-manager"></div>
+                        <button onclick="addRound()" class="btn btn-primary">➕ Yeni Tur Ekle</button>
+                    </div>
 
-                <!-- Sonuç Giriş -->
-                <div class="admin-section">
-                    <h3>⚽ Maç Sonuçları</h3>
-                    <div id="match-result-input"></div>
-                </div>
+                    <!-- Çekilişler -->
+                    <div class="admin-section">
+                        <h3>🎯 Çekilişler</h3>
+                        <div id="manual-draw-section"></div>
+                        <button onclick="checkAndRun()" class="btn btn-success">🔄 Tüm Çekilişleri Kontrol Et</button>
+                    </div>
 
-                <!-- Veri İşlemleri -->
-                <div class="admin-section">
-                    <h3>💾 Veri İşlemleri</h3>
-                    <button onclick="downloadData()" class="btn btn-secondary">📥 Veriyi İndir (JSON)</button>
-                    <button onclick="document.getElementById('file-input').click()" class="btn btn-secondary">📤 Veriyi Yükle</button>
-                    <button onclick="resetTournament()" class="btn btn-danger">🔴 Turnuvayı Sıfırla</button>
-                    <input type="file" id="file-input" style="display:none;" accept=".json" onchange="uploadData(event)">
+                    <!-- Sonuç Giriş -->
+                    <div class="admin-section">
+                        <h3>⚽ Maç Sonuçları</h3>
+                        <div id="match-result-input"></div>
+                    </div>
+
+                    <!-- Admin Şifresi -->
+                    <div class="admin-section">
+                        <h3>🔑 Admin Şifresi Değiştir</h3>
+                        <div class="admin-form">
+                            <input type="password" id="new-password" placeholder="Yeni şifre..." class="input">
+                            <button onclick="changeAdminPassword()" class="btn btn-primary">🔄 Değiştir</button>
+                        </div>
+                    </div>
+
+                    <!-- Veri İşlemleri -->
+                    <div class="admin-section">
+                        <h3>💾 Veri İşlemleri</h3>
+                        <button onclick="downloadData()" class="btn btn-secondary">📥 Veriyi İndir (JSON)</button>
+                        <button onclick="document.getElementById('file-input').click()" class="btn btn-secondary">📤 Veriyi Yükle</button>
+                        <button onclick="resetTournament()" class="btn btn-danger">🔴 Turnuvayı Sıfırla</button>
+                        <input type="file" id="file-input" style="display:none;" accept=".json" onchange="uploadData(event)">
+                    </div>
                 </div>
             </div>
         </section>

@@ -9,6 +9,9 @@ let tournament = {
     lastUpdated: new Date().toISOString()
 };
 
+// Global admin state
+let isAdminLoggedIn = false;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -151,12 +154,88 @@ function updateParticipantsManager() {
     tournament.participants.forEach(p => {
         const item = document.createElement('div');
         item.className = 'participant-item';
+        
+        const editId = `edit-${p.id}`;
+        
         item.innerHTML = `
-            <span class="participant-item-name">👤 ${p.name}</span>
-            <button onclick="deleteParticipant(${p.id})" class="participant-item-delete" title="Sil">✕</button>
+            <span class="participant-item-name" ondblclick="startEditParticipant(${p.id})">👤 ${p.name}</span>
+            <div style="display: flex; gap: 5px;">
+                <button onclick="startEditParticipant(${p.id})" class="participant-item-delete" style="background: #667eea; width: auto; padding: 5px 10px; font-size: 0.9em;" title="Düzenle">✏️</button>
+                <button onclick="deleteParticipant(${p.id})" class="participant-item-delete" title="Sil">✕</button>
+            </div>
         `;
         manager.appendChild(item);
     });
+}
+
+// Start Edit Participant
+function startEditParticipant(id) {
+    const participant = tournament.participants.find(p => p.id === id);
+    if (!participant) return;
+    
+    const manager = document.getElementById('participants-manager');
+    const items = manager.querySelectorAll('.participant-item');
+    
+    items.forEach(item => {
+        if (item.dataset.editId === String(id)) {
+            item.innerHTML = `
+                <input type="text" id="edit-input-${id}" value="${participant.name}" class="input" style="flex: 1;">
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="saveEditParticipant(${id})" class="participant-item-delete" style="background: #28a745; width: auto; padding: 5px 10px; font-size: 0.9em;">✅</button>
+                    <button onclick="cancelEditParticipant()" class="participant-item-delete" style="background: #999; width: auto; padding: 5px 10px; font-size: 0.9em;">❌</button>
+                </div>
+            `;
+            document.getElementById(`edit-input-${id}`).focus();
+        }
+    });
+    
+    // If not found, update the manager
+    const names = manager.querySelectorAll('.participant-item-name');
+    names.forEach((name, idx) => {
+        const item = name.closest('.participant-item');
+        if (tournament.participants[idx] && tournament.participants[idx].id === id) {
+            item.innerHTML = `
+                <input type="text" id="edit-input-${id}" value="${participant.name}" class="input" style="flex: 1;">
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="saveEditParticipant(${id})" class="participant-item-delete" style="background: #28a745; width: auto; padding: 5px 10px; font-size: 0.9em;">✅</button>
+                    <button onclick="cancelEditParticipant()" class="participant-item-delete" style="background: #999; width: auto; padding: 5px 10px; font-size: 0.9em;">❌</button>
+                </div>
+            `;
+            document.getElementById(`edit-input-${id}`).focus();
+        }
+    });
+}
+
+// Save Edit Participant
+function saveEditParticipant(id) {
+    const input = document.getElementById(`edit-input-${id}`);
+    if (!input) return;
+    
+    const newName = input.value.trim();
+    
+    if (!newName) {
+        showNotification('İsim boş olamaz', 'error');
+        return;
+    }
+    
+    const participant = tournament.participants.find(p => p.id === id);
+    if (!participant) return;
+    
+    // Check if name already exists
+    if (tournament.participants.some(p => p.id !== id && p.name.toLowerCase() === newName.toLowerCase())) {
+        showNotification('Bu isim zaten var!', 'error');
+        return;
+    }
+    
+    participant.name = newName;
+    saveData();
+    updateParticipantsManager();
+    showNotification('İsim güncellendi! ✏️', 'success');
+}
+
+// Cancel Edit Participant
+function cancelEditParticipant() {
+    updateParticipantsManager();
 }
 
 // Update Schedule
@@ -535,6 +614,16 @@ function shuffleArray(array) {
 
 // Show Tabs
 function showTab(tabName) {
+    // Check admin access
+    if (tabName === 'admin' && !isAdminLoggedIn) {
+        document.getElementById('admin-login-screen').style.display = 'block';
+        document.getElementById('admin-panel-content').style.display = 'none';
+    } else if (tabName === 'admin' && isAdminLoggedIn) {
+        document.getElementById('admin-login-screen').style.display = 'none';
+        document.getElementById('admin-panel-content').style.display = 'block';
+        updateAllUI();
+    }
+    
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -551,7 +640,78 @@ function showTab(tabName) {
     // Activate corresponding nav button
     event.target.classList.add('active');
     
-    updateAllUI();
+    if (tabName !== 'admin') {
+        updateAllUI();
+    }
+}
+
+// Admin Login
+function adminLogin() {
+    const password = document.getElementById('admin-password').value;
+    
+    if (!password) {
+        showNotification('Şifreyi gir', 'error');
+        return;
+    }
+    
+    if (password === tournament.adminPassword) {
+        isAdminLoggedIn = true;
+        document.getElementById('admin-password').value = '';
+        document.getElementById('admin-login-screen').style.display = 'none';
+        document.getElementById('admin-panel-content').style.display = 'block';
+        updateAllUI();
+        showNotification('Başarıyla giriş yaptın! ✅', 'success');
+    } else {
+        showNotification('Yanlış şifre! ❌', 'error');
+        document.getElementById('admin-password').value = '';
+    }
+}
+
+// Admin Logout
+function adminLogout() {
+    if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+        isAdminLoggedIn = false;
+        document.getElementById('admin-login-screen').style.display = 'block';
+        document.getElementById('admin-panel-content').style.display = 'none';
+        showNotification('Çıkış yaptın 👋', 'success');
+    }
+}
+
+// Cancel Admin Login
+function cancelAdminLogin() {
+    document.getElementById('admin-password').value = '';
+    document.getElementById('admin-login-screen').style.display = 'none';
+    
+    // Switch to another tab
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.getElementById('overview').classList.add('active');
+    document.querySelectorAll('.nav-btn')[0].classList.add('active');
+}
+
+// Change Admin Password
+function changeAdminPassword() {
+    const newPassword = document.getElementById('new-password').value.trim();
+    
+    if (!newPassword) {
+        showNotification('Yeni şifreyi gir', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 3) {
+        showNotification('Şifre en az 3 karakter olmalı', 'error');
+        return;
+    }
+    
+    tournament.adminPassword = newPassword;
+    document.getElementById('new-password').value = '';
+    saveData();
+    showNotification('Şifre değiştirildi! 🔐', 'success');
 }
 
 // Show Notification

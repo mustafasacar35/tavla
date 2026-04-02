@@ -346,6 +346,63 @@ tbody tr:first-child {
     margin-right: 10px;
 }
 
+/* Admin Login */
+.admin-login-box {
+    background: white;
+    border: 3px solid #667eea;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-login-box h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+.admin-login-box p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+}
+
+.admin-login-box input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+}
+
+.admin-login-box input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+.admin-login-box .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 1em;
+}
+
 /* Admin Panel */
 .admin-panel {
     display: grid;
@@ -395,6 +452,7 @@ tbody tr:first-child {
     justify-content: space-between;
     align-items: center;
     transition: all 0.3s;
+    gap: 10px;
 }
 
 .participant-item:hover {
@@ -406,6 +464,31 @@ tbody tr:first-child {
 .participant-item-name {
     font-weight: bold;
     flex: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+.participant-item-name:hover {
+    text-decoration: underline;
+}
+
+.participant-item input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.participant-item input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+}
+
+.participant-item-actions {
+    display: flex;
+    gap: 5px;
 }
 
 .participant-item-delete {
@@ -421,11 +504,16 @@ tbody tr:first-child {
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
+    flex-shrink: 0;
 }
 
 .participant-item-delete:hover {
     background: #c82333;
     transform: scale(1.2);
+}
+
+.participant-item-delete:active {
+    transform: scale(0.95);
 }
 
 /* Rounds Manager */

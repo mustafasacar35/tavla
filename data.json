@@ -1,5 +1,6 @@
 {
   "name": "Denizli Cerrahisi Hastanesi 1. Geleneksel Tavla Turnuvası",
+  "adminPassword": "1234",
   "currentRound": 1,
   "totalRounds": 3,
   "rounds": [
