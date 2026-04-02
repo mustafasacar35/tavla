@@ -346,7 +346,7 @@ function getNextDrawCountdown() {
     return getCountdownText(drawDate);
 }
 
-// Update Current Round
+// Update Current Round With Animation
 function updateCurrentRound() {
     const activeRound = tournament.rounds.find(r => !r.completed);
     
@@ -358,38 +358,62 @@ function updateCurrentRound() {
     
     document.getElementById('round-title').textContent = activeRound.name;
     const matchesContainer = document.getElementById('matches-container');
-    matchesContainer.innerHTML = '';
     
-    const matches = activeRound.matches || [];
-    
-    if (matches.length === 0) {
-        matchesContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Henüz eşleştirme yapılmadı</p>';
+    // Check if draw has been made
+    if (!activeRound.matches || activeRound.matches.length === 0) {
+        const drawDate = new Date(activeRound.drawDate);
+        const now = new Date();
+        const timeLeft = getCountdownText(drawDate);
+        
+        matchesContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekilişi Henüz Yapılmadı</h2>
+                <p style="font-size: 1.2em; color: #764ba2; margin: 20px 0;">
+                    <strong>${timeLeft}</strong> sonra <br>
+                    çekilişi sonuçları burada görülecek! 🎲
+                </p>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <p style="color: #666; margin: 0;">📅 Çekiliş Tarihi: <strong>${drawDate.toLocaleString('tr-TR')}</strong></p>
+                </div>
+            </div>
+        `;
         return;
     }
     
+    // Çekiliş yapıldı - maçları animasyonla göster
+    matchesContainer.innerHTML = '';
+    const matches = activeRound.matches || [];
+    
+    // Animasyonlu maç gösterme
     matches.forEach((match, index) => {
         const player1 = tournament.participants.find(p => p.id === match.player1Id);
         const player2 = tournament.participants.find(p => p.id === match.player2Id);
         
-        const card = document.createElement('div');
-        card.className = 'match-card';
-        
-        const player1Score = match.result ? match.result.player1Score : '';
-        const player2Score = match.result ? match.result.player2Score : '';
-        
-        card.innerHTML = `
-            <div class="player">
-                ${player1 ? `👤 ${player1.name}` : 'Bilinmeyen'}
-            </div>
-            <div class="vs">VS</div>
-            <div class="player">
-                ${player2 ? `👤 ${player2.name}` : 'Bilinmeyen'}
-            </div>
-            <div style="margin-left: 20px; font-weight: bold;">
-                ${player1Score !== '' ? `${player1Score} - ${player2Score}` : '⏳'}
-            </div>
-        `;
-        matchesContainer.appendChild(card);
+        // Her maç için gecikme ile ekle
+        setTimeout(() => {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.style.animation = 'slideIn 0.5s ease-out';
+            
+            const player1Score = match.result ? match.result.player1Score : '';
+            const player2Score = match.result ? match.result.player2Score : '';
+            
+            card.innerHTML = `
+                <div class="player">
+                    ${player1 ? `👤 ${player1.name}` : 'Bilinmeyen'}
+                </div>
+                <div class="vs">VS</div>
+                <div class="player">
+                    ${player2 ? `👤 ${player2.name}` : 'Bilinmeyen'}
+                </div>
+                <div style="margin-left: 20px; font-weight: bold;">
+                    ${player1Score !== '' ? `${player1Score} - ${player2Score}` : '⏳'}
+                </div>
+            `;
+            
+            matchesContainer.appendChild(card);
+            playNotificationSound();
+        }, index * 300); // Her 300ms'de bir maç ekle
     });
 }
 
