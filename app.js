@@ -57,6 +57,11 @@ function saveData() {
 
 // Initialize tournament UI
 function initializeTournament() {
+    // Ensure adminPassword exists
+    if (!tournament.adminPassword) {
+        tournament.adminPassword = "1234";
+        saveData();
+    }
     updateAllUI();
 }
 
