@@ -101,18 +101,34 @@
                         <div id="participants-manager" class="participants-manager"></div>
                     </div>
 
+                    <!-- GitHub Token -->
+                    <div class="admin-section">
+                        <h3>🔑 GitHub Bağlantısı</h3>
+                        <p style="color: #666; margin-bottom: 10px; font-size: 0.9em;">Çekiliş sonuçlarının kalıcı olarak kaydedilmesi için GitHub token gereklidir.</p>
+                        <div id="github-token-status" style="margin-bottom: 10px; font-weight: bold;"></div>
+                        <div class="admin-form">
+                            <input type="password" id="github-token-input" placeholder="GitHub Personal Access Token..." class="input">
+                            <button onclick="saveGitHubToken()" class="btn btn-success">💾 Token Kaydet</button>
+                            <button onclick="clearGitHubToken()" class="btn btn-danger">🗑️ Token Sil</button>
+                        </div>
+                    </div>
+
                     <!-- Turnuva Ayarları -->
                     <div class="admin-section">
                         <h3>📅 Turnuva Takvimi Ayarları</h3>
                         <div class="rounds-manager" id="rounds-manager"></div>
-                        <button onclick="addRound()" class="btn btn-primary">➕ Yeni Tur Ekle</button>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="addRound()" class="btn btn-primary">➕ Yeni Tur Ekle</button>
+                            <button onclick="saveRoundsToGitHub()" class="btn btn-success">💾 Ayarları GitHub'a Kaydet</button>
+                        </div>
                     </div>
 
                     <!-- Çekilişler -->
                     <div class="admin-section">
                         <h3>🎯 Çekilişler</h3>
+                        <p style="color: #666; margin-bottom: 10px; font-size: 0.9em;">⚠️ Çekiliş bir kez yapılır ve GitHub'a kaydedilir. Herkes aynı sonucu görür.</p>
                         <div id="manual-draw-section"></div>
-                        <button onclick="checkAndRun()" class="btn btn-success">🔄 Tüm Çekilişleri Kontrol Et</button>
+                        <button onclick="checkAndRun()" class="btn btn-success">🔄 Zamanlanmış Çekilişleri Kontrol Et</button>
                     </div>
 
                     <!-- Sonuç Giriş -->

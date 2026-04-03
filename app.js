@@ -1,3 +1,14 @@
+// ============================================================
+// TAVLA TURNUVASI ÇEKİLİŞ SİSTEMİ
+// GitHub-backed persistent draw system
+// ============================================================
+
+// GitHub Configuration
+const GITHUB_OWNER = 'mustafasacar35';
+const GITHUB_REPO = 'tavla';
+const GITHUB_BRANCH = 'main';
+const GITHUB_FILE_PATH = 'data.json';
+
 // Data Structure
 let tournament = {
     name: "Tavla Turnuvası",
@@ -11,105 +22,189 @@ let tournament = {
 
 // Global admin state
 let isAdminLoggedIn = false;
+let isSavingToGitHub = false;
 
-// Initialize
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Clear potentially corrupted localStorage on each load
-    localStorage.clear();
-    console.log('🧹 localStorage tamamen temizlendi');
-    
     loadDataFromGitHub();
-    initializeTournament();
     startCountdown();
-    setInterval(checkAndRun, 10000); // Check every 10 seconds for draws
+    // Check for scheduled draws every 30 seconds (not 10)
+    setInterval(checkAndRunScheduledDraws, 30000);
 });
 
-// Load data from GitHub
+// ============================================================
+// GITHUB DATA OPERATIONS
+// ============================================================
+
+// Load data from GitHub (single source of truth)
 async function loadDataFromGitHub() {
     try {
-        // First, save any existing matches from localStorage before clearing
-        const localBackup = localStorage.getItem('tavlaTournament');
-        let savedMatches = {};
+        const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FILE_PATH}?t=${Date.now()}`;
+        const response = await fetch(url, { cache: 'no-store' });
         
-        if (localBackup) {
-            try {
-                const localData = JSON.parse(localBackup);
-                // Save all matches that have been completed/started
-                if (localData.rounds) {
-                    localData.rounds.forEach((round, idx) => {
-                        if (round.matches && round.matches.length > 0) {
-                            savedMatches[idx] = round.matches;
-                        }
-                    });
-                }
-            } catch (e) {
-                console.log('LocalStorage backup parse hatası');
-            }
+        if (!response.ok) {
+            throw new Error(`GitHub fetch failed: ${response.status}`);
         }
         
-        const url = 'https://raw.githubusercontent.com/mustafasacar35/tavla/main/data.json';
-        const response = await fetch(url);
         const data = await response.json();
         tournament = data;
+        console.log('✅ GitHub\'dan veri yüklendi');
+        console.log(`📊 Turlar: ${tournament.rounds.length}, Katılımcılar: ${tournament.participants.length}`);
         
-        // Restore previously saved matches
-        if (tournament.rounds) {
-            tournament.rounds.forEach((round, idx) => {
-                if (savedMatches[idx] && savedMatches[idx].length > 0) {
-                    round.matches = savedMatches[idx];
-                    round.drawCompleted = true; // Mark as already drawn
-                    console.log(`✅ ${round.name} maçları localStorage'den restore edildi`);
-                }
-            });
-        }
+        // Log draw status for each round
+        tournament.rounds.forEach(r => {
+            console.log(`  → ${r.name}: drawCompleted=${r.drawCompleted}, matches=${r.matches?.length || 0}`);
+        });
         
-        localStorage.removeItem('tavlaTournament'); // Clear old cache
-        saveData(); // Save merged data to localStorage
     } catch (error) {
-        console.log('GitHub\'dan load edilemedi, localStorage\'dan yükleniyor', error);
-        loadData();
-    }
-}
-
-// Load data from localStorage or create new
-function loadData() {
-    const saved = localStorage.getItem('tavlaTournament');
-    if (saved) {
-        try {
-            tournament = JSON.parse(saved);
-        } catch (e) {
-            console.log('Could not load saved data, starting fresh');
-            tournament = createNewTournament();
+        console.error('❌ GitHub\'dan yüklenemedi:', error);
+        // Fallback to localStorage
+        const saved = localStorage.getItem('tavlaTournament');
+        if (saved) {
+            try {
+                tournament = JSON.parse(saved);
+                console.log('📦 localStorage\'dan yüklendi (fallback)');
+            } catch (e) {
+                console.log('⚠️ localStorage da bozuk, varsayılan veri kullanılıyor');
+            }
         }
-    } else {
-        tournament = createNewTournament();
     }
     
-    // Auto-backup every 5 minutes
-    if (!window.autoBackupInterval) {
-        window.autoBackupInterval = setInterval(() => {
-            autoBackupData();
-        }, 5 * 60 * 1000); // 5 dakikada bir
+    initializeTournament();
+}
+
+// Save data to GitHub via API
+async function saveDataToGitHub() {
+    const token = getGitHubToken();
+    
+    if (!token) {
+        console.warn('⚠️ GitHub token yok, sadece localStorage\'a kaydediliyor');
+        saveToLocalStorage();
+        showNotification('⚠️ GitHub token girilmemiş! Veriler sadece bu tarayıcıda kayıtlı.', 'error');
+        return false;
+    }
+    
+    if (isSavingToGitHub) {
+        console.log('⏳ GitHub\'a kayıt devam ediyor, bekleyiniz...');
+        return false;
+    }
+    
+    isSavingToGitHub = true;
+    
+    try {
+        // First get the current file's SHA (required for update)
+        const fileUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
+        const getResponse = await fetch(fileUrl, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!getResponse.ok) {
+            throw new Error(`GitHub get failed: ${getResponse.status} ${await getResponse.text()}`);
+        }
+        
+        const fileData = await getResponse.json();
+        const currentSHA = fileData.sha;
+        
+        // Prepare updated content
+        tournament.lastUpdated = new Date().toISOString();
+        const content = JSON.stringify(tournament, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(content)));
+        
+        // Update the file
+        const updateResponse = await fetch(fileUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `Turnuva güncelleme - ${new Date().toLocaleString('tr-TR')}`,
+                content: encodedContent,
+                sha: currentSHA,
+                branch: GITHUB_BRANCH
+            })
+        });
+        
+        if (!updateResponse.ok) {
+            const errText = await updateResponse.text();
+            throw new Error(`GitHub update failed: ${updateResponse.status} ${errText}`);
+        }
+        
+        console.log('✅ GitHub\'a kaydedildi!');
+        saveToLocalStorage(); // Also save locally as cache
+        isSavingToGitHub = false;
+        return true;
+        
+    } catch (error) {
+        console.error('❌ GitHub\'a kayıt hatası:', error);
+        saveToLocalStorage();
+        showNotification('❌ GitHub\'a kayıt başarısız: ' + error.message, 'error');
+        isSavingToGitHub = false;
+        return false;
     }
 }
 
-// Auto Backup Data
-function autoBackupData() {
-    const dataStr = JSON.stringify(tournament, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `tavla_backup_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('💾 Otomatik backup yapıldı!');
+// Save to localStorage (local cache only)
+function saveToLocalStorage() {
+    tournament.lastUpdated = new Date().toISOString();
+    localStorage.setItem('tavlaTournament', JSON.stringify(tournament));
 }
 
-// Create new tournament structure
+// Get GitHub token from localStorage
+function getGitHubToken() {
+    return localStorage.getItem('githubToken') || '';
+}
+
+// Set GitHub token
+function setGitHubToken(token) {
+    if (token && token.trim()) {
+        localStorage.setItem('githubToken', token.trim());
+        return true;
+    }
+    return false;
+}
+
+// ============================================================
+// SAVE DATA (unified save function)
+// ============================================================
+
+// Save data locally and update UI (does NOT push to GitHub)
+function saveData() {
+    saveToLocalStorage();
+    updateAllUI();
+}
+
+// Save data AND push to GitHub (for admin actions)
+async function saveDataAndSync() {
+    saveToLocalStorage();
+    updateAllUI();
+    
+    const success = await saveDataToGitHub();
+    if (success) {
+        showNotification('✅ GitHub\'a kaydedildi!', 'success');
+    }
+    return success;
+}
+
+// ============================================================
+// TOURNAMENT INITIALIZATION
+// ============================================================
+
+function initializeTournament() {
+    if (!tournament.adminPassword) {
+        tournament.adminPassword = "1234";
+        saveToLocalStorage();
+    }
+    updateAllUI();
+}
+
 function createNewTournament() {
     return {
         name: "Tavla Turnuvası",
@@ -122,24 +217,10 @@ function createNewTournament() {
     };
 }
 
-// Save data to localStorage
-function saveData() {
-    tournament.lastUpdated = new Date().toISOString();
-    localStorage.setItem('tavlaTournament', JSON.stringify(tournament));
-    updateAllUI();
-}
+// ============================================================
+// UI UPDATE FUNCTIONS
+// ============================================================
 
-// Initialize tournament UI
-function initializeTournament() {
-    // Ensure adminPassword exists
-    if (!tournament.adminPassword) {
-        tournament.adminPassword = "1234";
-        saveData();
-    }
-    updateAllUI();
-}
-
-// Update all UI elements
 function updateAllUI() {
     updateOverview();
     updateSchedule();
@@ -151,11 +232,9 @@ function updateAllUI() {
     updateManualDrawSection();
 }
 
-// Update Overview Tab
 function updateOverview() {
     document.getElementById('participant-count').textContent = tournament.participants.length;
     document.getElementById('current-round-num').textContent = tournament.currentRound;
-    
     updateParticipantsList();
 }
 
@@ -176,7 +255,10 @@ function updateParticipantsList() {
     });
 }
 
-// Add Participant
+// ============================================================
+// PARTICIPANT MANAGEMENT
+// ============================================================
+
 function addParticipant() {
     const input = document.getElementById('participant-input');
     const name = input.value.trim();
@@ -204,14 +286,12 @@ function addParticipant() {
     showNotification(`${name} eklendi! ✨`, 'success');
 }
 
-// Delete Participant
 function deleteParticipant(id) {
     tournament.participants = tournament.participants.filter(p => p.id !== id);
     saveData();
     showNotification('Katılımcı silindi! 🗑️', 'success');
 }
 
-// Clear All Participants
 function clearAllParticipants() {
     if (confirm('⚠️ TÜM katılımcıları silmek istediğinizden emin misiniz?')) {
         tournament.participants = [];
@@ -220,7 +300,6 @@ function clearAllParticipants() {
     }
 }
 
-// Update Participants Manager UI
 function updateParticipantsManager() {
     const manager = document.getElementById('participants-manager');
     manager.innerHTML = '';
@@ -234,8 +313,6 @@ function updateParticipantsManager() {
         const item = document.createElement('div');
         item.className = 'participant-item';
         
-        const editId = `edit-${p.id}`;
-        
         item.innerHTML = `
             <span class="participant-item-name" ondblclick="startEditParticipant(${p.id})">👤 ${p.name}</span>
             <div style="display: flex; gap: 5px;">
@@ -247,28 +324,11 @@ function updateParticipantsManager() {
     });
 }
 
-// Start Edit Participant
 function startEditParticipant(id) {
     const participant = tournament.participants.find(p => p.id === id);
     if (!participant) return;
     
     const manager = document.getElementById('participants-manager');
-    const items = manager.querySelectorAll('.participant-item');
-    
-    items.forEach(item => {
-        if (item.dataset.editId === String(id)) {
-            item.innerHTML = `
-                <input type="text" id="edit-input-${id}" value="${participant.name}" class="input" style="flex: 1;">
-                <div style="display: flex; gap: 5px;">
-                    <button onclick="saveEditParticipant(${id})" class="participant-item-delete" style="background: #28a745; width: auto; padding: 5px 10px; font-size: 0.9em;">✅</button>
-                    <button onclick="cancelEditParticipant()" class="participant-item-delete" style="background: #999; width: auto; padding: 5px 10px; font-size: 0.9em;">❌</button>
-                </div>
-            `;
-            document.getElementById(`edit-input-${id}`).focus();
-        }
-    });
-    
-    // If not found, update the manager
     const names = manager.querySelectorAll('.participant-item-name');
     names.forEach((name, idx) => {
         const item = name.closest('.participant-item');
@@ -285,7 +345,6 @@ function startEditParticipant(id) {
     });
 }
 
-// Save Edit Participant
 function saveEditParticipant(id) {
     const input = document.getElementById(`edit-input-${id}`);
     if (!input) return;
@@ -300,7 +359,6 @@ function saveEditParticipant(id) {
     const participant = tournament.participants.find(p => p.id === id);
     if (!participant) return;
     
-    // Check if name already exists
     if (tournament.participants.some(p => p.id !== id && p.name.toLowerCase() === newName.toLowerCase())) {
         showNotification('Bu isim zaten var!', 'error');
         return;
@@ -312,12 +370,14 @@ function saveEditParticipant(id) {
     showNotification('İsim güncellendi! ✏️', 'success');
 }
 
-// Cancel Edit Participant
 function cancelEditParticipant() {
     updateParticipantsManager();
 }
 
-// Update Schedule
+// ============================================================
+// SCHEDULE
+// ============================================================
+
 function updateSchedule() {
     const schedule = document.getElementById('schedule-list');
     schedule.innerHTML = '';
@@ -331,15 +391,28 @@ function updateSchedule() {
         const drawDate = new Date(round.drawDate);
         const now = new Date();
         const isCompleted = round.completed;
+        const isDrawDone = round.drawCompleted;
         const isActive = now >= drawDate && !isCompleted;
         
         const item = document.createElement('div');
         item.className = `schedule-item ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`;
+        
+        let statusText;
+        if (isCompleted) {
+            statusText = '✅ Tamamlandı';
+        } else if (isDrawDone) {
+            statusText = '🎲 Çekiliş yapıldı - Maçlar devam ediyor';
+        } else if (isActive) {
+            statusText = '⏰ Çekiliş zamanı geldi!';
+        } else {
+            statusText = '⏳ Bekleniyor';
+        }
+        
         item.innerHTML = `
             <div class="schedule-info">
                 <h3>🎯 ${round.name}</h3>
                 <p>📅 ${drawDate.toLocaleString('tr-TR')}</p>
-                <p>${isCompleted ? '✅ Tamamlandı' : isActive ? '⏰ Çekiliş şu an aktif!' : '⏳ Bekleniyor'}</p>
+                <p>${statusText}</p>
             </div>
             <div class="countdown">
                 <span id="countdown-${index}">${getCountdownText(drawDate)}</span>
@@ -371,13 +444,10 @@ function getCountdownText(date) {
     }
 }
 
-// Update countdown every second
 function startCountdown() {
     setInterval(() => {
-        const now = new Date();
         document.getElementById('next-draw-countdown').textContent = getNextDrawCountdown();
         
-        // Update schedule countdowns
         tournament.rounds.forEach((round, index) => {
             const element = document.getElementById(`countdown-${index}`);
             if (element) {
@@ -388,16 +458,22 @@ function startCountdown() {
 }
 
 function getNextDrawCountdown() {
-    const now = new Date();
     const activeRound = tournament.rounds.find(r => !r.completed);
     
     if (!activeRound) return '📊 Turnuva bitti!';
+    
+    if (activeRound.drawCompleted) {
+        return '🎲 Çekiliş yapıldı!';
+    }
     
     const drawDate = new Date(activeRound.drawDate);
     return getCountdownText(drawDate);
 }
 
-// Update Current Round With Animation
+// ============================================================
+// CURRENT ROUND DISPLAY
+// ============================================================
+
 function updateCurrentRound() {
     const activeRound = tournament.rounds.find(r => !r.completed);
     
@@ -413,17 +489,16 @@ function updateCurrentRound() {
     const now = new Date();
     const drawTimeReached = now >= drawDate;
     
-    // Check if draw has been made
-    if (!activeRound.matches || activeRound.matches.length === 0) {
-        // If draw time hasn't passed yet - show countdown
+    // If draw hasn't been completed yet
+    if (!activeRound.drawCompleted || !activeRound.matches || activeRound.matches.length === 0) {
         if (!drawTimeReached) {
             const timeLeft = getCountdownText(drawDate);
             matchesContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px;">
-                    <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekilişi Henüz Yapılmadı</h2>
+                    <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekiliş Henüz Yapılmadı</h2>
                     <p style="font-size: 1.2em; color: #764ba2; margin: 20px 0;">
                         <strong>${timeLeft}</strong> sonra <br>
-                        çekilişi sonuçları burada görülecek! 🎲
+                        çekiliş sonuçları burada görülecek! 🎲
                     </p>
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
                         <p style="color: #666; margin: 0;">📅 Çekiliş Tarihi: <strong>${drawDate.toLocaleString('tr-TR')}</strong></p>
@@ -431,12 +506,11 @@ function updateCurrentRound() {
                 </div>
             `;
         } else {
-            // Draw time has passed but no matches yet - just show loading
             matchesContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px;">
-                    <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekiliş Yapılıyor...</h2>
+                    <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekiliş Bekleniyor...</h2>
                     <p style="font-size: 1.2em; color: #764ba2; margin: 20px 0;">
-                        Maç sonuçları yükleniyor 🎲
+                        Çekiliş zamanı geldi, sonuçlar yükleniyor 🎲
                     </p>
                 </div>
             `;
@@ -444,16 +518,14 @@ function updateCurrentRound() {
         return;
     }
     
-    // Çekiliş yapıldı - maçları animasyonla göster
+    // Draw completed - show matches
     matchesContainer.innerHTML = '';
     const matches = activeRound.matches || [];
     
-    // Animasyonlu maç gösterme
     matches.forEach((match, index) => {
         const player1 = tournament.participants.find(p => p.id === match.player1Id);
         const player2 = tournament.participants.find(p => p.id === match.player2Id);
         
-        // Her maç için gecikme ile ekle
         setTimeout(() => {
             const card = document.createElement('div');
             card.className = 'match-card';
@@ -461,6 +533,14 @@ function updateCurrentRound() {
             
             const player1Score = match.result ? match.result.player1Score : '';
             const player2Score = match.result ? match.result.player2Score : '';
+            
+            let resultDisplay = '⏳';
+            if (match.result) {
+                const winnerId = match.result.winner;
+                const p1Class = winnerId === match.player1Id ? 'color: #28a745; font-weight: bold;' : 'color: #dc3545;';
+                const p2Class = winnerId === match.player2Id ? 'color: #28a745; font-weight: bold;' : 'color: #dc3545;';
+                resultDisplay = `<span style="${p1Class}">${player1Score}</span> - <span style="${p2Class}">${player2Score}</span>`;
+            }
             
             card.innerHTML = `
                 <div class="player">
@@ -470,17 +550,20 @@ function updateCurrentRound() {
                 <div class="player">
                     ${player2 ? `👤 ${player2.name}` : 'Bilinmeyen'}
                 </div>
-                <div style="margin-left: 20px; font-weight: bold;">
-                    ${player1Score !== '' ? `${player1Score} - ${player2Score}` : '⏳'}
+                <div style="margin-left: 20px; font-weight: bold; font-size: 1.2em;">
+                    ${resultDisplay}
                 </div>
             `;
             
             matchesContainer.appendChild(card);
-        }, index * 300); // Her 300ms'de bir maç ekle
+        }, index * 300);
     });
 }
 
-// Update Standings
+// ============================================================
+// STANDINGS
+// ============================================================
+
 function updateStandings() {
     const standings = document.getElementById('standings-table');
     
@@ -489,7 +572,6 @@ function updateStandings() {
         return;
     }
     
-    // Calculate standings
     const sorted = [...tournament.participants]
         .sort((a, b) => {
             const aWinRate = a.wins + a.losses > 0 ? a.wins / (a.wins + a.losses) : 0;
@@ -538,7 +620,10 @@ function updateStandings() {
     standings.innerHTML = html;
 }
 
-// Update Match Result Inputs
+// ============================================================
+// MATCH RESULTS
+// ============================================================
+
 function updateMatchResultInputs() {
     const container = document.getElementById('match-result-input');
     const activeRound = tournament.rounds.find(r => !r.completed);
@@ -596,8 +681,8 @@ function updateResultInput() {
     const p2Score = match.result ? match.result.player2Score : '';
     
     resultDiv.innerHTML = `
-        <div style="display: flex; gap: 15px; align-items: center;">
-            <div style="flex: 1;">
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 100px;">
                 <strong>${player1 ? player1.name : 'Oyuncu 1'}</strong>
             </div>
             <div class="match-result-inputs">
@@ -605,16 +690,16 @@ function updateResultInput() {
                 <span>-</span>
                 <input type="number" id="score2" value="${p2Score}" placeholder="0" min="0" max="100">
             </div>
-            <div style="flex: 1; text-align: right;">
+            <div style="flex: 1; text-align: right; min-width: 100px;">
                 <strong>${player2 ? player2.name : 'Oyuncu 2'}</strong>
             </div>
-            <button onclick="saveMatchResult(${index})" class="btn btn-success">💾 Kaydet</button>
+            <button onclick="saveMatchResult(${index})" class="btn btn-success">💾 Kaydet & GitHub'a Gönder</button>
         </div>
     `;
 }
 
-// Save Match Result
-function saveMatchResult(matchIndex) {
+// Save Match Result -> pushes to GitHub
+async function saveMatchResult(matchIndex) {
     const score1 = parseInt(document.getElementById('score1').value);
     const score2 = parseInt(document.getElementById('score2').value);
     
@@ -629,6 +714,18 @@ function saveMatchResult(matchIndex) {
     const match = activeRound.matches[matchIndex];
     const player1 = tournament.participants.find(p => p.id === match.player1Id);
     const player2 = tournament.participants.find(p => p.id === match.player2Id);
+    
+    // Remove old result stats if updating
+    if (match.result) {
+        const oldWinner = match.result.winner;
+        if (oldWinner === match.player1Id) {
+            player1.wins = Math.max(0, player1.wins - 1);
+            player2.losses = Math.max(0, player2.losses - 1);
+        } else {
+            player2.wins = Math.max(0, player2.wins - 1);
+            player1.losses = Math.max(0, player1.losses - 1);
+        }
+    }
     
     match.result = {
         player1Score: score1,
@@ -645,42 +742,83 @@ function saveMatchResult(matchIndex) {
         player1.losses++;
     }
     
-    saveData();
+    // Check if all matches in this round are complete
+    const allMatchesDone = activeRound.matches.every(m => m.result !== null);
+    if (allMatchesDone) {
+        activeRound.completed = true;
+        
+        // Eliminate losers
+        activeRound.matches.forEach(m => {
+            const loserId = m.result.winner === m.player1Id ? m.player2Id : m.player1Id;
+            const loser = tournament.participants.find(p => p.id === loserId);
+            if (loser) loser.eliminated = true;
+        });
+        
+        // Advance current round
+        tournament.currentRound++;
+        
+        showNotification(`🏆 ${activeRound.name} tamamlandı! Tüm maçlar bitti.`, 'success');
+    }
+    
+    // Save and push to GitHub
+    showNotification('💾 Kaydediliyor ve GitHub\'a gönderiliyor...', 'success');
+    await saveDataAndSync();
     showNotification('Sonuç kaydedildi! ✨', 'success');
 }
 
-// Check and Run Draws
-function checkAndRun() {
+// ============================================================
+// DRAW SYSTEM (THE CORE FIX)
+// ============================================================
+
+// Scheduled draw check - runs every 30 seconds
+// ONLY triggers a draw if:
+//   1. The round is not completed
+//   2. The draw date has passed
+//   3. drawCompleted is FALSE (draw hasn't been done yet)
+//   4. Admin is logged in (only admin's browser triggers draws)
+function checkAndRunScheduledDraws() {
+    // Only admin's browser should trigger automatic draws
+    if (!isAdminLoggedIn) {
+        console.log('🔒 Admin değil, otomatik çekiliş tetiklenmez');
+        return;
+    }
+    
     const now = new Date();
     let drawHappened = false;
     
     tournament.rounds.forEach(round => {
-        // Only run draw if:
-        // 1. Round not completed
-        // 2. Draw time has passed
-        // 3. Draw hasn't been done yet
-        if (!round.completed && now >= new Date(round.drawDate) && !round.drawCompleted) {
-            localStorage.removeItem('tavlaTournament'); // Force clear stale data
-            runDraw(round);
+        if (!round.completed && 
+            !round.drawCompleted && 
+            now >= new Date(round.drawDate) &&
+            (!round.matches || round.matches.length === 0)) {
+            
+            console.log(`🎲 Zamanlanmış çekiliş tetikleniyor: ${round.name}`);
+            performDraw(round);
             drawHappened = true;
         }
     });
     
     if (drawHappened) {
-        saveData();
+        // Save to GitHub so everyone sees the same result
+        saveDataAndSync();
     }
 }
 
-// Run Draw (Create matches for a round)
-function runDraw(round) {
-    // If matches already created, don't recreate!
+// The actual draw logic - creates matches ONCE
+function performDraw(round) {
+    // CRITICAL: If matches already exist, DO NOT recreate
     if (round.matches && round.matches.length > 0) {
-        console.log(`ℹ️ ${round.name} çekilişi zaten yapılmış`);
-        // Mark draw as done so checkAndRun doesn't call this again
+        console.log(`ℹ️ ${round.name} çekilişi zaten yapılmış, atlanıyor`);
         if (!round.drawCompleted) {
             round.drawCompleted = true;
         }
-        return;
+        return false;
+    }
+    
+    // CRITICAL: If drawCompleted is already true, DO NOT draw again
+    if (round.drawCompleted) {
+        console.log(`ℹ️ ${round.name} drawCompleted=true, çekiliş atlanıyor`);
+        return false;
     }
     
     // Get eligible players
@@ -689,20 +827,21 @@ function runDraw(round) {
     if (eligible.length < 2) {
         round.completed = true;
         round.drawCompleted = true;
-        return;
+        console.log(`⚠️ ${round.name}: Yeterli oyuncu yok (${eligible.length})`);
+        return false;
     }
     
     // Initialize matches array
     round.matches = [];
     
-    // Shuffle participants
+    // Shuffle participants (Fisher-Yates)
     eligible = shuffleArray(eligible);
     
     // Validate shuffle result
     const ids = eligible.map(p => p.id);
     if (new Set(ids).size !== ids.length) {
         console.error('❌ HATA: Shuffle\'da duplicate!');
-        return;
+        return false;
     }
     
     // Create matches - pair sequentially
@@ -720,7 +859,13 @@ function runDraw(round) {
         console.log(`⚔️ Maç ${Math.floor(i/2) + 1}: ${p1.name} vs ${p2.name}`);
     }
     
-    // Mark draw as completed
+    // Handle bye (odd number of players)
+    if (eligible.length % 2 === 1) {
+        const byePlayer = eligible[eligible.length - 1];
+        console.log(`🎫 ${byePlayer.name} bu turda bay geçiyor`);
+    }
+    
+    // MARK DRAW AS COMPLETED - This is the key flag
     round.drawCompleted = true;
     
     console.log(`✅ ${round.name}: ${round.matches.length} maç oluşturuldu`);
@@ -733,26 +878,48 @@ function runDraw(round) {
             'Oyuncu 2': p2?.name
         };
     }));
-    showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
-}
-
-// Create Next Round
-function createNextRound(roundNumber, previousDate) {
-    const nextDate = new Date(previousDate);
-    nextDate.setDate(nextDate.getDate() + 1);
     
-    return {
-        id: Date.now(),
-        name: `${roundNumber}. Tur`,
-        roundNumber: roundNumber,
-        drawDate: nextDate.toISOString(),
-        completed: false,
-        matches: [],
-        createWinnerRound: roundNumber < 5 // Limit rounds
-    };
+    showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
+    return true;
 }
 
-// Shuffle Array
+// Manual draw by admin
+async function manualDrawRound(index) {
+    const round = tournament.rounds[index];
+    
+    if (tournament.participants.length < 2) {
+        showNotification('En az 2 katılımcı olmalı!', 'error');
+        return;
+    }
+    
+    if (round.drawCompleted || (round.matches && round.matches.length > 0)) {
+        showNotification('Bu turun çekilişi zaten yapılmış!', 'error');
+        return;
+    }
+    
+    if (round.completed) {
+        showNotification('Bu tur zaten tamamlandı!', 'error');
+        return;
+    }
+    
+    if (!confirm(`🎲 "${round.name}" için çekilişi yapmak istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`)) {
+        return;
+    }
+    
+    const success = performDraw(round);
+    
+    if (success) {
+        // Save and push to GitHub immediately
+        showNotification('💾 Çekiliş kaydediliyor ve GitHub\'a gönderiliyor...', 'success');
+        await saveDataAndSync();
+        updateAllUI();
+    }
+}
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+
 function shuffleArray(array) {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -762,9 +929,11 @@ function shuffleArray(array) {
     return shuffled;
 }
 
-// Show Tabs
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+
 function showTab(tabName) {
-    // Check admin access
     if (tabName === 'admin' && !isAdminLoggedIn) {
         document.getElementById('admin-login-screen').style.display = 'block';
         document.getElementById('admin-panel-content').style.display = 'none';
@@ -774,28 +943,29 @@ function showTab(tabName) {
         updateAllUI();
     }
     
-    // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     
-    // Deactivate all nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Show selected tab
     document.getElementById(tabName).classList.add('active');
     
-    // Activate corresponding nav button
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
     if (tabName !== 'admin') {
         updateAllUI();
     }
 }
 
-// Admin Login
+// ============================================================
+// ADMIN AUTH
+// ============================================================
+
 function adminLogin() {
     const password = document.getElementById('admin-password').value;
     
@@ -809,7 +979,15 @@ function adminLogin() {
         document.getElementById('admin-password').value = '';
         document.getElementById('admin-login-screen').style.display = 'none';
         document.getElementById('admin-panel-content').style.display = 'block';
+        
+        // Show token status
+        const token = getGitHubToken();
+        if (!token) {
+            showNotification('🔑 GitHub token henüz girilmemiş! Yönetim panelinden girin.', 'error');
+        }
+        
         updateAllUI();
+        updateGitHubTokenStatus();
         showNotification('Başarıyla giriş yaptın! ✅', 'success');
     } else {
         showNotification('Yanlış şifre! ❌', 'error');
@@ -817,7 +995,6 @@ function adminLogin() {
     }
 }
 
-// Admin Logout
 function adminLogout() {
     if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
         isAdminLoggedIn = false;
@@ -827,12 +1004,10 @@ function adminLogout() {
     }
 }
 
-// Cancel Admin Login
 function cancelAdminLogin() {
     document.getElementById('admin-password').value = '';
     document.getElementById('admin-login-screen').style.display = 'none';
     
-    // Switch to another tab
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -844,7 +1019,6 @@ function cancelAdminLogin() {
     document.querySelectorAll('.nav-btn')[0].classList.add('active');
 }
 
-// Change Admin Password
 function changeAdminPassword() {
     const newPassword = document.getElementById('new-password').value.trim();
     
@@ -860,11 +1034,49 @@ function changeAdminPassword() {
     
     tournament.adminPassword = newPassword;
     document.getElementById('new-password').value = '';
-    saveData();
+    saveDataAndSync();
     showNotification('Şifre değiştirildi! 🔐', 'success');
 }
 
-// Show Notification
+// GitHub Token management
+function saveGitHubToken() {
+    const input = document.getElementById('github-token-input');
+    const token = input.value.trim();
+    
+    if (!token) {
+        showNotification('Token boş olamaz', 'error');
+        return;
+    }
+    
+    if (setGitHubToken(token)) {
+        input.value = '';
+        updateGitHubTokenStatus();
+        showNotification('✅ GitHub token kaydedildi!', 'success');
+    }
+}
+
+function clearGitHubToken() {
+    localStorage.removeItem('githubToken');
+    updateGitHubTokenStatus();
+    showNotification('🗑️ GitHub token silindi', 'success');
+}
+
+function updateGitHubTokenStatus() {
+    const statusEl = document.getElementById('github-token-status');
+    if (!statusEl) return;
+    
+    const token = getGitHubToken();
+    if (token) {
+        statusEl.innerHTML = `<span style="color: #28a745;">✅ Token kayıtlı (${token.substring(0, 8)}...)</span>`;
+    } else {
+        statusEl.innerHTML = `<span style="color: #dc3545;">❌ Token girilmemiş</span>`;
+    }
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -877,36 +1089,19 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Play Notification Sound
-function playNotificationSound() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-}
+// ============================================================
+// DATA MANAGEMENT (Admin)
+// ============================================================
 
-// Reset Tournament
 function resetTournament() {
     if (confirm('⚠️ Turnuvayı sıfırlamak istediğinizden emin misiniz? Tüm veriler silinecektir!')) {
         localStorage.removeItem('tavlaTournament');
         tournament = createNewTournament();
-        saveData();
+        saveDataAndSync();
         showNotification('Turnuva sıfırlandı! 🔄', 'success');
     }
 }
 
-// Download Data
 function downloadData() {
     const dataStr = JSON.stringify(tournament, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -922,18 +1117,17 @@ function downloadData() {
     showNotification('Veriler indirildi! 💾', 'success');
 }
 
-// Upload Data
 function uploadData(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const data = JSON.parse(e.target.result);
             tournament = data;
-            saveData();
-            showNotification('Veriler yüklendi! 📤', 'success');
+            await saveDataAndSync();
+            showNotification('Veriler yüklendi ve GitHub\'a gönderildi! 📤', 'success');
         } catch (error) {
             showNotification('Dosya yüklenemedi! ❌', 'error');
         }
@@ -941,7 +1135,10 @@ function uploadData(event) {
     reader.readAsText(file);
 }
 
-// Update Rounds Manager
+// ============================================================
+// ROUNDS MANAGEMENT (Admin)
+// ============================================================
+
 function updateRoundsManager() {
     const manager = document.getElementById('rounds-manager');
     manager.innerHTML = '';
@@ -955,24 +1152,28 @@ function updateRoundsManager() {
         const drawDate = new Date(round.drawDate);
         const dateStr = drawDate.toISOString().slice(0, 16);
         
+        const isDrawDone = round.drawCompleted;
+        const drawStatusColor = isDrawDone ? '#28a745' : '#ffc107';
+        const drawStatusText = isDrawDone ? '🎲 Çekiliş yapıldı' : round.completed ? '✅ Tamamlandı' : '⏳ Bekleniyor';
+        
         const item = document.createElement('div');
         item.className = 'round-item';
         item.innerHTML = `
             <div>
                 <div class="round-item-label">Tur Adı</div>
-                <input type="text" value="${round.name}" onchange="updateRoundName(${index}, this.value)" style="width: 100%;">
+                <input type="text" value="${round.name}" onchange="updateRoundName(${index}, this.value)" style="width: 100%;" ${isDrawDone ? 'disabled' : ''}>
             </div>
             <div>
                 <div class="round-item-label">Tarih ve Saat</div>
-                <input type="datetime-local" value="${dateStr}" onchange="updateRoundDate(${index}, this.value)">
+                <input type="datetime-local" value="${dateStr}" onchange="updateRoundDate(${index}, this.value)" ${isDrawDone ? 'disabled' : ''}>
             </div>
             <div>
                 <div class="round-item-label">Durum</div>
-                <select disabled style="width: 100%;">
-                    <option>${round.completed ? '✅ Tamamlandı' : '⏳ Bekleniyor'}</option>
-                </select>
+                <div style="padding: 8px; background: ${drawStatusColor}20; border: 1px solid ${drawStatusColor}; border-radius: 5px; text-align: center; font-weight: bold;">
+                    ${drawStatusText}
+                </div>
             </div>
-            <button onclick="deleteRound(${index})" class="round-item-delete">🗑️ Sil</button>
+            ${!isDrawDone && !round.completed ? `<button onclick="deleteRound(${index})" class="round-item-delete">🗑️ Sil</button>` : '<div></div>'}
         `;
         manager.appendChild(item);
     });
@@ -1006,6 +1207,7 @@ function addRound() {
         roundNumber: tournament.rounds.length + 1,
         drawDate: now.toISOString(),
         completed: false,
+        drawCompleted: false,
         matches: [],
         createWinnerRound: true
     });
@@ -1014,7 +1216,16 @@ function addRound() {
     showNotification('Yeni tur eklendi! ➕', 'success');
 }
 
-// Update Manual Draw Section
+// Save all round settings to GitHub
+async function saveRoundsToGitHub() {
+    showNotification('💾 Tur ayarları GitHub\'a kaydediliyor...', 'success');
+    await saveDataAndSync();
+}
+
+// ============================================================
+// MANUAL DRAW SECTION (Admin)
+// ============================================================
+
 function updateManualDrawSection() {
     const section = document.getElementById('manual-draw-section');
     section.innerHTML = '';
@@ -1024,46 +1235,47 @@ function updateManualDrawSection() {
         return;
     }
     
-    const html = '<div class="manual-draw-list">';
-    let content = '';
+    let content = '<div class="manual-draw-list">';
     
     tournament.rounds.forEach((round, index) => {
         const drawDate = new Date(round.drawDate);
         const now = new Date();
         const isCompleted = round.completed;
+        const isDrawDone = round.drawCompleted;
         const isPast = now >= drawDate;
         
+        let statusText;
+        let statusColor;
+        if (isDrawDone) {
+            statusText = `✅ Çekiliş yapıldı (${round.matches?.length || 0} maç)`;
+            statusColor = '#28a745';
+        } else if (isPast) {
+            statusText = '⚠️ Çekiliş zamanı geçti - Manuel yapabilirsiniz';
+            statusColor = '#ffc107';
+        } else {
+            statusText = '⏳ Bekleniyor';
+            statusColor = '#6c757d';
+        }
+        
         content += `
-            <div class="manual-draw-item ${isCompleted ? 'completed' : ''}">
+            <div class="manual-draw-item ${isDrawDone ? 'completed' : ''}">
                 <div class="manual-draw-text">
                     <strong>${round.name}</strong><br>
                     <span class="countdown">📅 ${drawDate.toLocaleString('tr-TR')}</span><br>
-                    <span>${isCompleted ? '✅ Çekilişi yapıldı' : isPast ? '⚠️ Geçti' : '⏳ Bekleniyor'}</span>
+                    <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>
                 </div>
-                <button onclick="manualDrawRound(${index})" class="manual-draw-btn" ${isCompleted || tournament.participants.length < 2 ? 'disabled' : ''}>
+                <button onclick="manualDrawRound(${index})" class="manual-draw-btn" ${isDrawDone || isCompleted || tournament.participants.length < 2 ? 'disabled' : ''}>
                     🎲 Çekiliş Yap
                 </button>
             </div>
         `;
     });
     
-    section.innerHTML = html + content + '</div>';
+    content += '</div>';
+    section.innerHTML = content;
 }
 
-function manualDrawRound(index) {
-    const round = tournament.rounds[index];
-    
-    if (tournament.participants.length < 2) {
-        showNotification('En az 2 katılımcı olmalı!', 'error');
-        return;
-    }
-    
-    if (round.completed) {
-        showNotification('Bu tur zaten tamamlandı!', 'error');
-        return;
-    }
-    
-    runDraw(round);
-    saveData();
-    updateAllUI();
+// Keep the old function name working for the button in HTML
+function checkAndRun() {
+    checkAndRunScheduledDraws();
 }
