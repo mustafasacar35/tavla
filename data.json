@@ -118,7 +118,9 @@
           "id": "match_1_18",
           "player1Id": 13,
           "player2Id": 27,
-          "result": null
+          "result": null,
+          "scheduledDate": "2026-04-06T09:30:00.000Z",
+          "scheduledLocation": "6. kat"
         }
       ],
       "createWinnerRound": true
@@ -145,43 +147,259 @@
     }
   ],
   "participants": [
-    { "id": 1, "name": "Ozan TÜRKMENOĞLU", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 2, "name": "Mustafa Faik BAKAN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 3, "name": "Suat GENCER", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 4, "name": "Deniz EKREN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 5, "name": "Nazmi Yaşar SAYIM", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 6, "name": "Eylül DAŞÇI BOZDEMİR", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 7, "name": "TUNA KENAR", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 8, "name": "Ferit ÖZEN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 9, "name": "Ömer Levent TUNCAY", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 10, "name": "Mustafa AĞAR", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 11, "name": "Uğur DİDİN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 12, "name": "Uğur AKTI", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 13, "name": "İbrahim ÖZDEŞ", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 14, "name": "Muhammet İBRAHİMOĞLU", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 15, "name": "Bülent Kamil AYKAL", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 16, "name": "Erdal COŞKUN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 17, "name": "Bilal ÖZDEMİR", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 18, "name": "Nazım KARALEZLİ", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 19, "name": "Umut FAYDACI", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 20, "name": "Yücel YÜCE", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 21, "name": "Hasan AKŞIK", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 22, "name": "Taner DEĞİRMENCİ", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 23, "name": "Çağdaş ERDOĞAN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 24, "name": "Zeynep ARSLANTAŞ", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 25, "name": "Cemalettin Serhad AKSOY", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 26, "name": "İSMAİL ÇELİK", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 27, "name": "Mustafa SAÇAR", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 28, "name": "Ömer Erhan KARAHASANOĞLU", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 29, "name": "Yusuf İ. İLHANOĞLU", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 30, "name": "Süleyman KAYIK", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 31, "name": "Nilgün ŞİMŞİR ATALAY", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 32, "name": "İbrahim OĞUZ", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 33, "name": "Şefik TARLAN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 34, "name": "Volkan ÇINAR", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 35, "name": "Osman İLHAN", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 36, "name": "Alper BAŞAKCI", "wins": 0, "losses": 0, "eliminated": false }
+    {
+      "id": 1,
+      "name": "Ozan TÜRKMENOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 2,
+      "name": "Mustafa Faik BAKAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 3,
+      "name": "Suat GENCER",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 4,
+      "name": "Deniz EKREN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 5,
+      "name": "Nazmi Yaşar SAYIM",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 6,
+      "name": "Eylül DAŞÇI BOZDEMİR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 7,
+      "name": "TUNA KENAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 8,
+      "name": "Ferit ÖZEN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 9,
+      "name": "Ömer Levent TUNCAY",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 10,
+      "name": "Mustafa AĞAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 11,
+      "name": "Uğur DİDİN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 12,
+      "name": "Uğur AKTI",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 13,
+      "name": "İbrahim ÖZDEŞ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 14,
+      "name": "Muhammet İBRAHİMOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 15,
+      "name": "Bülent Kamil AYKAL",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 16,
+      "name": "Erdal COŞKUN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 17,
+      "name": "Bilal ÖZDEMİR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 18,
+      "name": "Nazım KARALEZLİ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 19,
+      "name": "Umut FAYDACI",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 20,
+      "name": "Yücel YÜCE",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 21,
+      "name": "Hasan AKŞIK",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 22,
+      "name": "Taner DEĞİRMENCİ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 23,
+      "name": "Çağdaş ERDOĞAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 24,
+      "name": "Zeynep ARSLANTAŞ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 25,
+      "name": "Cemalettin Serhad AKSOY",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 26,
+      "name": "İSMAİL ÇELİK",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 27,
+      "name": "Mustafa SAÇAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 28,
+      "name": "Ömer Erhan KARAHASANOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 29,
+      "name": "Yusuf İ. İLHANOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 30,
+      "name": "Süleyman KAYIK",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 31,
+      "name": "Nilgün ŞİMŞİR ATALAY",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 32,
+      "name": "İbrahim OĞUZ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 33,
+      "name": "Şefik TARLAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 34,
+      "name": "Volkan ÇINAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 35,
+      "name": "Osman İLHAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 36,
+      "name": "Alper BAŞAKCI",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-03T14:15:00Z"
+  "lastUpdated": "2026-04-03T17:01:36.825Z"
 }
