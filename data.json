@@ -17,9 +17,9 @@
           "player1Id": 16,
           "player2Id": 20,
           "result": {
-            "player1Score": 2,
-            "player2Score": 1,
-            "winner": 16
+            "player1Score": 0,
+            "player2Score": 0,
+            "winner": 20
           }
         },
         {
@@ -191,7 +191,8 @@
       "name": "Eylül DAŞÇI BOZDEMİR",
       "wins": 0,
       "losses": 0,
-      "eliminated": false
+      "eliminated": false,
+      "gender": "female"
     },
     {
       "id": 7,
@@ -259,8 +260,8 @@
     {
       "id": 16,
       "name": "Erdal COŞKUN",
-      "wins": 1,
-      "losses": 0,
+      "wins": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -287,8 +288,8 @@
     {
       "id": 20,
       "name": "Yücel YÜCE",
-      "wins": 0,
-      "losses": 1,
+      "wins": 1,
+      "losses": 0,
       "eliminated": false
     },
     {
@@ -317,7 +318,8 @@
       "name": "Zeynep ARSLANTAŞ",
       "wins": 0,
       "losses": 0,
-      "eliminated": false
+      "eliminated": false,
+      "gender": "female"
     },
     {
       "id": 25,
@@ -366,7 +368,8 @@
       "name": "Nilgün ŞİMŞİR ATALAY",
       "wins": 0,
       "losses": 0,
-      "eliminated": false
+      "eliminated": false,
+      "gender": "female"
     },
     {
       "id": 32,
@@ -405,5 +408,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-03T16:27:02.248Z"
+  "lastUpdated": "2026-04-03T16:30:49.489Z"
 }
