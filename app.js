@@ -616,7 +616,7 @@ function runDraw(round) {
         // Shuffle participants
         eligible = shuffleArray(eligible);
         
-        // Create matches
+        // Create matches - pair sequentially to ensure each person appears exactly once
         round.matches = [];
         for (let i = 0; i < eligible.length - 1; i += 2) {
             round.matches.push({
@@ -627,13 +627,7 @@ function runDraw(round) {
             });
         }
         
-        // Create winner round if needed
-        if (round.createWinnerRound && eligible.length >= 2) {
-            tournament.rounds.push(createNextRound(round.roundNumber + 1, round.drawDate));
-        }
-        
-        showNotification(`🎉 ${round.name} Çekilişi Yapıldı!`, 'success');
-        playNotificationSound();
+        showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
     }
 }
 
