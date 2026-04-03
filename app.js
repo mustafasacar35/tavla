@@ -27,7 +27,8 @@ async function loadDataFromGitHub() {
         const response = await fetch(url);
         const data = await response.json();
         tournament = data;
-        saveData(); // Save to localStorage as backup
+        localStorage.removeItem('tavlaTournament'); // Clear old cache first
+        saveData(); // Save fresh data to localStorage
     } catch (error) {
         console.log('GitHub\'dan load edilemedi, localStorage\'dan yükleniyor', error);
         loadData();
@@ -606,6 +607,7 @@ function checkAndRun() {
     
     tournament.rounds.forEach(round => {
         if (!round.completed && now >= new Date(round.drawDate)) {
+            localStorage.removeItem('tavlaTournament'); // Force clear stale data
             runDraw(round);
             drawHappened = true;
         }
@@ -618,31 +620,39 @@ function checkAndRun() {
 
 // Run Draw (Create matches for a round)
 function runDraw(round) {
-    if (!round.matches || round.matches.length === 0) {
-        // Get eligible players for this round
-        let eligible = tournament.participants.filter(p => !p.eliminated);
-        
-        if (eligible.length < 2) {
-            round.completed = true;
-            return;
-        }
-        
-        // Shuffle participants
-        eligible = shuffleArray(eligible);
-        
-        // Create matches - pair sequentially to ensure each person appears exactly once
-        round.matches = [];
-        for (let i = 0; i < eligible.length - 1; i += 2) {
-            round.matches.push({
-                id: Date.now() + i,
-                player1Id: eligible[i].id,
-                player2Id: eligible[i + 1].id,
-                result: null
-            });
-        }
-        
-        showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
+    // Get eligible players - ALWAYS recreate matches (no check)
+    let eligible = tournament.participants.filter(p => !p.eliminated);
+    
+    if (eligible.length < 2) {
+        round.completed = true;
+        return;
     }
+    
+    // Clear previous matches
+    round.matches = [];
+    
+    // Shuffle participants
+    eligible = shuffleArray(eligible);
+    
+    // Validate shuffle result
+    const ids = eligible.map(p => p.id);
+    if (new Set(ids).size !== ids.length) {
+        console.error('❌ HATA: Shuffle\'da duplicate!');
+        return;
+    }
+    
+    // Create matches - pair sequentially
+    for (let i = 0; i < eligible.length - 1; i += 2) {
+        round.matches.push({
+            id: `match_${round.roundNumber}_${i/2}_${Date.now()}`,
+            player1Id: eligible[i].id,
+            player2Id: eligible[i + 1].id,
+            result: null
+        });
+    }
+    
+    console.log(`✅ ${round.name}: ${round.matches.length} maç oluşturuldu`);
+    showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
 }
 
 // Create Next Round
