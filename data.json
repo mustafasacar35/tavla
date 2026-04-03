@@ -118,7 +118,8 @@
           "id": "match_1_18",
           "player1Id": 13,
           "player2Id": 27,
-          "result": null
+          "result": null,
+          "scheduledDate": "2026-04-06T10:30:00.000Z"
         }
       ],
       "createWinnerRound": true
@@ -399,5 +400,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-03T15:16:27.735Z"
+  "lastUpdated": "2026-04-03T15:34:06.364Z"
 }
