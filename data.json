@@ -10,6 +10,7 @@
       "roundNumber": 1,
       "drawDate": "2026-04-03T09:35:00Z",
       "completed": false,
+      "drawCompleted": false,
       "matches": [],
       "createWinnerRound": true
     },
@@ -19,6 +20,7 @@
       "roundNumber": 2,
       "drawDate": "2026-04-06T17:00:00Z",
       "completed": false,
+      "drawCompleted": false,
       "matches": [],
       "createWinnerRound": true
     },
@@ -28,6 +30,7 @@
       "roundNumber": 3,
       "drawDate": "2026-04-07T17:00:00Z",
       "completed": false,
+      "drawCompleted": false,
       "matches": [],
       "createWinnerRound": false
     }

@@ -606,7 +606,11 @@ function checkAndRun() {
     let drawHappened = false;
     
     tournament.rounds.forEach(round => {
-        if (!round.completed && now >= new Date(round.drawDate)) {
+        // Only run draw if:
+        // 1. Round not completed
+        // 2. Draw time has passed
+        // 3. Draw hasn't been done yet
+        if (!round.completed && now >= new Date(round.drawDate) && !round.drawCompleted) {
             localStorage.removeItem('tavlaTournament'); // Force clear stale data
             runDraw(round);
             drawHappened = true;
@@ -622,7 +626,11 @@ function checkAndRun() {
 function runDraw(round) {
     // If matches already created, don't recreate!
     if (round.matches && round.matches.length > 0) {
-        console.log(`ℹ️ ${round.name} çekilişi zaten yapılmış, tekrar yapılmıyor`);
+        console.log(`ℹ️ ${round.name} çekilişi zaten yapılmış`);
+        // Mark draw as done so checkAndRun doesn't call this again
+        if (!round.drawCompleted) {
+            round.drawCompleted = true;
+        }
         return;
     }
     
@@ -631,6 +639,7 @@ function runDraw(round) {
     
     if (eligible.length < 2) {
         round.completed = true;
+        round.drawCompleted = true;
         return;
     }
     
@@ -656,6 +665,9 @@ function runDraw(round) {
             result: null
         });
     }
+    
+    // Mark draw as completed
+    round.drawCompleted = true;
     
     console.log(`✅ ${round.name}: ${round.matches.length} maç oluşturuldu`);
     showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
