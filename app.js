@@ -373,25 +373,38 @@ function updateCurrentRound() {
     
     document.getElementById('round-title').textContent = activeRound.name;
     const matchesContainer = document.getElementById('matches-container');
+    const drawDate = new Date(activeRound.drawDate);
+    const now = new Date();
+    const drawTimeReached = now >= drawDate;
     
     // Check if draw has been made
     if (!activeRound.matches || activeRound.matches.length === 0) {
-        const drawDate = new Date(activeRound.drawDate);
-        const now = new Date();
-        const timeLeft = getCountdownText(drawDate);
-        
-        matchesContainer.innerHTML = `
-            <div style="text-align: center; padding: 40px;">
-                <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekilişi Henüz Yapılmadı</h2>
-                <p style="font-size: 1.2em; color: #764ba2; margin: 20px 0;">
-                    <strong>${timeLeft}</strong> sonra <br>
-                    çekilişi sonuçları burada görülecek! 🎲
-                </p>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                    <p style="color: #666; margin: 0;">📅 Çekiliş Tarihi: <strong>${drawDate.toLocaleString('tr-TR')}</strong></p>
+        // If draw time hasn't passed yet - show countdown
+        if (!drawTimeReached) {
+            const timeLeft = getCountdownText(drawDate);
+            matchesContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekilişi Henüz Yapılmadı</h2>
+                    <p style="font-size: 1.2em; color: #764ba2; margin: 20px 0;">
+                        <strong>${timeLeft}</strong> sonra <br>
+                        çekilişi sonuçları burada görülecek! 🎲
+                    </p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                        <p style="color: #666; margin: 0;">📅 Çekiliş Tarihi: <strong>${drawDate.toLocaleString('tr-TR')}</strong></p>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // Draw time has passed but no matches yet - just show loading
+            matchesContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h2 style="color: #667eea; font-size: 1.5em;">⏳ Çekiliş Yapılıyor...</h2>
+                    <p style="font-size: 1.2em; color: #764ba2; margin: 20px 0;">
+                        Maç sonuçları yükleniyor 🎲
+                    </p>
+                </div>
+            `;
+        }
         return;
     }
     
