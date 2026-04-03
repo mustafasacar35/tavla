@@ -8,7 +8,7 @@
       "id": 1,
       "name": "1. Tur",
       "roundNumber": 1,
-      "drawDate": "2026-04-03T12:35:00Z",
+      "drawDate": "2026-04-03T09:35:00Z",
       "completed": false,
       "matches": [],
       "createWinnerRound": true
@@ -17,7 +17,7 @@
       "id": 2,
       "name": "Yarı Final",
       "roundNumber": 2,
-      "drawDate": "2026-04-06T20:00:00Z",
+      "drawDate": "2026-04-06T17:00:00Z",
       "completed": false,
       "matches": [],
       "createWinnerRound": true
@@ -26,7 +26,7 @@
       "id": 3,
       "name": "Final",
       "roundNumber": 3,
-      "drawDate": "2026-04-07T20:00:00Z",
+      "drawDate": "2026-04-07T17:00:00Z",
       "completed": false,
       "matches": [],
       "createWinnerRound": false
