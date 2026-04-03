@@ -14,6 +14,10 @@ let isAdminLoggedIn = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Clear potentially corrupted localStorage on each load
+    localStorage.clear();
+    console.log('🧹 localStorage tamamen temizlendi');
+    
     loadDataFromGitHub();
     initializeTournament();
     startCountdown();
@@ -703,18 +707,32 @@ function runDraw(round) {
     
     // Create matches - pair sequentially
     for (let i = 0; i < eligible.length - 1; i += 2) {
+        const p1 = eligible[i];
+        const p2 = eligible[i + 1];
+        
         round.matches.push({
             id: `match_${round.roundNumber}_${i/2}_${Date.now()}`,
-            player1Id: eligible[i].id,
-            player2Id: eligible[i + 1].id,
+            player1Id: p1.id,
+            player2Id: p2.id,
             result: null
         });
+        
+        console.log(`⚔️ Maç ${Math.floor(i/2) + 1}: ${p1.name} vs ${p2.name}`);
     }
     
     // Mark draw as completed
     round.drawCompleted = true;
     
     console.log(`✅ ${round.name}: ${round.matches.length} maç oluşturuldu`);
+    console.table(round.matches.map(m => {
+        const p1 = tournament.participants.find(p => p.id === m.player1Id);
+        const p2 = tournament.participants.find(p => p.id === m.player2Id);
+        return {
+            'Maç': m.id,
+            'Oyuncu 1': p1?.name,
+            'Oyuncu 2': p2?.name
+        };
+    }));
     showNotification(`🎉 ${round.name} Çekilişi Yapıldı! (${round.matches.length} maç)`, 'success');
 }
 
