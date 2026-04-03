@@ -500,7 +500,7 @@ function updateCurrentRound() {
         header.style.cssText = 'background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 15px; margin-top: 20px;';
         header.innerHTML = `
             <h3 style="margin: 0;">🎯 ${round.name} ${round.completed ? '✅' : '🎮'}</h3>
-            <p style="margin: 5px 0 0; opacity: 0.9; font-size: 0.9em;">${round.matches.length} eşleşme</p>
+            <p style="margin: 5px 0 0; opacity: 0.9; font-size: 0.9em;">${round.matches.length} eşleşme${round.byePlayer ? ` • 🎫 Bay: ${round.byePlayer.name}` : ''}</p>
         `;
         matchesContainer.appendChild(header);
         
@@ -584,6 +584,27 @@ function updateCurrentRound() {
             
             matchesContainer.appendChild(card);
         });
+        
+        // Show bye player card if exists
+        if (round.byePlayer) {
+            const byeCard = document.createElement('div');
+            byeCard.className = 'match-card';
+            byeCard.style.animation = `slideIn 0.3s ease-out ${round.matches.length * 0.1}s both`;
+            byeCard.style.background = 'linear-gradient(135deg, #d4edda, #c3e6cb)';
+            byeCard.style.borderLeft = '4px solid #28a745';
+            byeCard.innerHTML = `
+                <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+                    <div style="background: #28a745; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">🎫</div>
+                    <div class="player">
+                        👤 ${round.byePlayer.name}
+                    </div>
+                    <div style="margin-left: auto; color: #28a745; font-weight: bold; font-size: 0.9em;">
+                        ✅ Çekilişsiz üst tura geçiyor
+                    </div>
+                </div>
+            `;
+            matchesContainer.appendChild(byeCard);
+        }
     });
 }
 
@@ -945,10 +966,14 @@ function performDraw(round) {
             console.log(`  ⚔️ Maç ${matches.length}: ${p1.name} vs ${p2.name}`);
         }
         
-        // Handle bye (odd number)
+        // Handle bye (odd number) - this player auto-advances
         if (shuffled.length % 2 === 1) {
             const byePlayer = shuffled[shuffled.length - 1];
-            console.log(`  🎫 Bay: ${byePlayer.name} (bu turda oynamıyor)`);
+            round.byePlayer = { id: byePlayer.id, name: byePlayer.name };
+            console.log(`  🎫 Bay: ${byePlayer.name} (çekilişsiz üst tura geçiyor)`);
+            showNotification(`🎫 ${byePlayer.name} tek kaldı, otomatik üst tura geçecek!`, 'success');
+        } else {
+            round.byePlayer = null;
         }
         
         // SET the matches
@@ -1319,7 +1344,7 @@ function updateRoundsManager() {
         item.innerHTML = `
             <div>
                 <div class="round-item-label">Tur Adı</div>
-                <input type="text" value="${round.name}" onchange="updateRoundName(${index}, this.value)" style="width: 100%;" ${isDrawDone ? 'disabled' : ''}>
+                <input type="text" value="${round.name}" onchange="updateRoundName(${index}, this.value)" style="width: 100%;">
             </div>
             <div>
                 <div class="round-item-label">Tarih ve Saat</div>
@@ -1410,10 +1435,13 @@ function updateManualDrawSection() {
             const resultsEntered = round.matches.filter(m => m.result !== null).length;
             statusText = `✅ Çekiliş yapıldı (${round.matches.length} eşleşme)`;
             statusColor = '#28a745';
+            if (round.byePlayer) {
+                extraInfo += `<br><span style="color: #667eea;">🎫 Bay: <strong>${round.byePlayer.name}</strong> (çekilişsiz üst tura geçecek)</span>`;
+            }
             if (resultsEntered < round.matches.length) {
-                extraInfo = `<br><span style="color: #ffc107;">📝 Sonuç: ${resultsEntered}/${round.matches.length} girildi</span>`;
+                extraInfo += `<br><span style="color: #ffc107;">📝 Sonuç: ${resultsEntered}/${round.matches.length} girildi</span>`;
             } else if (round.completed) {
-                extraInfo = `<br><span style="color: #28a745;">✅ Tüm sonuçlar girildi</span>`;
+                extraInfo += `<br><span style="color: #28a745;">✅ Tüm sonuçlar girildi</span>`;
             }
         } else if (!prevCompleted && index > 0) {
             // Previous round not done - BLOCKED
