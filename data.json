@@ -58,7 +58,9 @@
     { "id": 23, "name": "Çağdaş ERDOĞAN", "wins": 0, "losses": 0, "eliminated": false },
     { "id": 24, "name": "Zeynep ARSLANTAŞ", "wins": 0, "losses": 0, "eliminated": false },
     { "id": 25, "name": "Cemalettin Serhad AKSOY", "wins": 0, "losses": 0, "eliminated": false },
-    { "id": 26, "name": "İSMAİL ÇELİK", "wins": 0, "losses": 0, "eliminated": false }
+    { "id": 26, "name": "İSMAİL ÇELİK", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 27, "name": "Mustafa SAÇAR", "wins": 0, "losses": 0, "eliminated": false },
+    { "id": 28, "name": "Ömer Erhan KARAHASANOĞLU", "wins": 0, "losses": 0, "eliminated": false }
   ],
   "standings": [],
   "lastUpdated": "2026-04-02T12:00:00Z"
