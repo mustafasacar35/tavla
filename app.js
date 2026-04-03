@@ -620,7 +620,13 @@ function checkAndRun() {
 
 // Run Draw (Create matches for a round)
 function runDraw(round) {
-    // Get eligible players - ALWAYS recreate matches (no check)
+    // If matches already created, don't recreate!
+    if (round.matches && round.matches.length > 0) {
+        console.log(`ℹ️ ${round.name} çekilişi zaten yapılmış, tekrar yapılmıyor`);
+        return;
+    }
+    
+    // Get eligible players
     let eligible = tournament.participants.filter(p => !p.eliminated);
     
     if (eligible.length < 2) {
@@ -628,7 +634,7 @@ function runDraw(round) {
         return;
     }
     
-    // Clear previous matches
+    // Initialize matches array
     round.matches = [];
     
     // Shuffle participants
