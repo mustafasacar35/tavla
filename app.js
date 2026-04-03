@@ -3,6 +3,17 @@
 // GitHub-backed persistent draw system
 // ============================================================
 
+// Time Helpers
+function toLocalISOString(date) {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 16);
+    return localISOTime;
+}
+
+function getGenderIcon(gender) {
+    return gender === 'female' ? '👩' : '👨';
+}
+
 // GitHub Configuration
 const GITHUB_OWNER = 'mustafasacar35';
 const GITHUB_REPO = 'tavla';
@@ -25,6 +36,7 @@ let tournament = {
 let isAdminLoggedIn = false;
 let isSavingToGitHub = false;
 let isDrawInProgress = false; // Lock to prevent concurrent draws
+let calendarDate = new Date(); // Current calendar month view
 
 // ============================================================
 // INITIALIZATION
@@ -213,11 +225,13 @@ function updateAllUI() {
     updateSchedule();
     updateCurrentRound();
     updateStandings();
+    updateCalendar();
     updateMatchResultInputs();
     if (isAdminLoggedIn) {
         updateParticipantsManager();
         updateRoundsManager();
         updateManualDrawSection();
+        updateBackupsListUI();
         updateGitHubTokenStatus();
     }
 }
@@ -235,8 +249,9 @@ function updateParticipantsList() {
     tournament.participants.forEach(p => {
         const card = document.createElement('div');
         card.className = 'participant-card';
+        const genderIcon = getGenderIcon(p.gender);
         card.innerHTML = `
-            <div class="name">👤 ${p.name}</div>
+            <div class="name">${genderIcon} ${p.name}</div>
             <div class="status">
                 <span>${p.eliminated ? '❌ Elendi' : '✅ Aktif'}</span>
             </div>
@@ -251,7 +266,16 @@ function updateParticipantsList() {
 
 function addParticipant() {
     const input = document.getElementById('participant-input');
+    const genderRadios = document.getElementsByName('gender-input');
     const name = input.value.trim();
+    
+    let gender = 'male';
+    for (const radio of genderRadios) {
+        if (radio.checked) {
+            gender = radio.value;
+            break;
+        }
+    }
     
     if (!name) { showNotification('Lütfen bir isim girin', 'error'); return; }
     
@@ -262,6 +286,7 @@ function addParticipant() {
     tournament.participants.push({
         id: Date.now(),
         name: name,
+        gender: gender,
         wins: 0,
         losses: 0,
         eliminated: false
@@ -269,7 +294,7 @@ function addParticipant() {
     
     input.value = '';
     saveData();
-    showNotification(`${name} eklendi! ✨`, 'success');
+    showNotification(`${getGenderIcon(gender)} ${name} eklendi! ✨`, 'success');
 }
 
 function deleteParticipant(id) {
@@ -299,8 +324,9 @@ function updateParticipantsManager() {
     tournament.participants.forEach(p => {
         const item = document.createElement('div');
         item.className = 'participant-item';
+        const genderIcon = getGenderIcon(p.gender);
         item.innerHTML = `
-            <span class="participant-item-name" ondblclick="startEditParticipant(${p.id})">👤 ${p.name}</span>
+            <span class="participant-item-name" ondblclick="startEditParticipant(${p.id})">${genderIcon} ${p.name}</span>
             <div style="display: flex; gap: 5px;">
                 <button onclick="startEditParticipant(${p.id})" class="participant-item-delete" style="background: #667eea; width: auto; padding: 5px 10px; font-size: 0.9em;" title="Düzenle">✏️</button>
                 <button onclick="deleteParticipant(${p.id})" class="participant-item-delete" title="Sil">✕</button>
@@ -320,8 +346,18 @@ function startEditParticipant(id) {
         const item = name.closest('.participant-item');
         if (tournament.participants[idx] && tournament.participants[idx].id === id) {
             item.innerHTML = `
-                <input type="text" id="edit-input-${id}" value="${participant.name}" class="input" style="flex: 1;">
-                <div style="display: flex; gap: 5px;">
+                <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                    <input type="text" id="edit-input-${id}" value="${participant.name}" class="input" style="width: 100%;">
+                    <div style="display: flex; gap: 15px; background: white; padding: 5px 10px; border-radius: 6px; border: 1px solid #edf2f7; font-size: 0.85em;">
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <input type="radio" name="edit-gender-${id}" value="male" ${participant.gender !== 'female' ? 'checked' : ''}> 👨 Erkek
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <input type="radio" name="edit-gender-${id}" value="female" ${participant.gender === 'female' ? 'checked' : ''}> 👩 Kadın
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 5px; align-items: flex-start;">
                     <button onclick="saveEditParticipant(${id})" class="participant-item-delete" style="background: #28a745; width: auto; padding: 5px 10px;">✅</button>
                     <button onclick="cancelEditParticipant()" class="participant-item-delete" style="background: #999; width: auto; padding: 5px 10px;">❌</button>
                 </div>
@@ -333,9 +369,18 @@ function startEditParticipant(id) {
 
 function saveEditParticipant(id) {
     const input = document.getElementById(`edit-input-${id}`);
+    const genderRadios = document.getElementsByName(`edit-gender-${id}`);
     if (!input) return;
     const newName = input.value.trim();
     if (!newName) { showNotification('İsim boş olamaz', 'error'); return; }
+    
+    let newGender = 'male';
+    for (const radio of genderRadios) {
+        if (radio.checked) {
+            newGender = radio.value;
+            break;
+        }
+    }
     
     const participant = tournament.participants.find(p => p.id === id);
     if (!participant) return;
@@ -345,9 +390,10 @@ function saveEditParticipant(id) {
     }
     
     participant.name = newName;
+    participant.gender = newGender;
     saveData();
     updateParticipantsManager();
-    showNotification('İsim güncellendi! ✏️', 'success');
+    showNotification('Bilgiler güncellendi! ✏️', 'success');
 }
 
 function cancelEditParticipant() {
@@ -500,7 +546,7 @@ function updateCurrentRound() {
         header.style.cssText = 'background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 15px; margin-top: 20px;';
         header.innerHTML = `
             <h3 style="margin: 0;">🎯 ${round.name} ${round.completed ? '✅' : '🎮'}</h3>
-            <p style="margin: 5px 0 0; opacity: 0.9; font-size: 0.9em;">${round.matches.length} eşleşme${round.byePlayer ? ` • 🎫 Bay: ${round.byePlayer.name}` : ''}</p>
+            <p style="margin: 5px 0 0; opacity: 0.9; font-size: 0.9em;">${round.matches.length} eşleşme${round.byePlayer ? ` • 🎫 Bay: ${getGenderIcon(round.byePlayer.gender)} ${round.byePlayer.name}` : ''}</p>
         `;
         matchesContainer.appendChild(header);
         
@@ -513,7 +559,7 @@ function updateCurrentRound() {
             card.className = 'match-card';
             card.style.animation = `slideIn 0.3s ease-out ${index * 0.1}s both`;
             card.style.flexDirection = 'column';
-            card.style.gap = '10px';
+            card.style.gap = '8px';
             
             let resultDisplay = '⏳';
             if (match.result) {
@@ -523,57 +569,68 @@ function updateCurrentRound() {
                 resultDisplay = `<span style="${p1Style}">${match.result.player1Score}</span> - <span style="${p2Style}">${match.result.player2Score}</span>`;
             }
             
-            // Match schedule date display
+            // Schedule info (date + location)
+            const matchId = `${round.roundNumber}_${index}`;
             let scheduleHTML = '';
+            
             if (!match.result) {
-                const scheduleDate = match.scheduledDate ? new Date(match.scheduledDate).toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : null;
-                const matchId = `${round.roundNumber}_${index}`;
+                const hasSchedule = match.scheduledDate || match.scheduledLocation;
                 
-                if (scheduleDate) {
-                    // Everyone sees the scheduled date
-                    scheduleHTML = `
-                        <div style="width: 100%; border-top: 1px solid #e0e0e0; padding-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <span style="color: #667eea; font-size: 0.85em;">📅 Planlanan: <strong>${scheduleDate}</strong></span>
-                            ${isAdminLoggedIn ? `<button onclick="clearMatchSchedule('${matchId}')" style="background: none; border: none; cursor: pointer; font-size: 0.85em; color: #dc3545;" title="Tarihi kaldır">❌</button>` : ''}
-                            ${isAdminLoggedIn ? `<button onclick="showSchedulePicker('${matchId}')" style="margin-left: auto; background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">📅 Değiştir</button>` : ''}
-                        </div>
-                        <div id="schedule-picker-${matchId}" style="display: none; width: 100%; padding: 8px; background: #f0f0ff; border-radius: 8px;">
-                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                <input type="datetime-local" id="schedule-input-${matchId}" style="padding: 6px; border: 1px solid #667eea; border-radius: 5px; font-size: 0.9em;" value="${match.scheduledDate ? new Date(match.scheduledDate).toISOString().slice(0,16) : ''}">
-                                <button onclick="saveMatchSchedule('${matchId}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85em;">✅ Kaydet</button>
-                                <button onclick="hideSchedulePicker('${matchId}')" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">❌ İptal</button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // No date yet
-                    scheduleHTML = `
-                        <div style="width: 100%; border-top: 1px solid #e0e0e0; padding-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <span style="color: #999; font-size: 0.85em;">📅 Henüz tarih belirlenmemiş</span>
-                            ${isAdminLoggedIn ? `
-                                <button onclick="showSchedulePicker('${matchId}')" style="margin-left: auto; background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">📅 Tarih Seç</button>
-                            ` : ''}
-                        </div>
-                        <div id="schedule-picker-${matchId}" style="display: none; width: 100%; padding: 8px; background: #f0f0ff; border-radius: 8px;">
-                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                <input type="datetime-local" id="schedule-input-${matchId}" style="padding: 6px; border: 1px solid #667eea; border-radius: 5px; font-size: 0.9em;">
-                                <button onclick="saveMatchSchedule('${matchId}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85em;">✅ Kaydet</button>
-                                <button onclick="hideSchedulePicker('${matchId}')" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">❌ İptal</button>
-                            </div>
-                        </div>
-                    `;
+                // Format date nicely: "12 Mart Perşembe, saat 12:30"
+                let dateText = '';
+                if (match.scheduledDate) {
+                    const d = new Date(match.scheduledDate);
+                    const options = { day: 'numeric', month: 'long', weekday: 'long', hour: '2-digit', minute: '2-digit' };
+                    dateText = d.toLocaleString('tr-TR', options);
                 }
+                
+                const locationText = match.scheduledLocation || '';
+                
+                // Display row
+                let infoDisplay = '';
+                if (hasSchedule) {
+                    const parts = [];
+                    if (dateText) parts.push(`📅 ${dateText}`);
+                    if (locationText) parts.push(`📍 ${locationText}`);
+                    infoDisplay = `<span style="color: #667eea; font-size: 0.85em;">${parts.join(' &bull; ')}</span>`;
+                } else {
+                    infoDisplay = `<span style="color: #bbb; font-size: 0.85em;">📅 Tarih ve yer henüz belirlenmemiş</span>`;
+                }
+                
+                scheduleHTML = `
+                    <div style="width: 100%; border-top: 1px solid #eee; padding-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        ${infoDisplay}
+                        ${isAdminLoggedIn ? `
+                            <button onclick="toggleScheduleEdit('${matchId}')" style="margin-left: auto; background: #667eea; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75em;">✏️ Düzenle</button>
+                        ` : ''}
+                    </div>
+                    <div id="schedule-edit-${matchId}" style="display: none; width: 100%; padding: 10px; background: #f8f8ff; border-radius: 8px; border: 1px solid #e0e0ff;">
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                            <label style="font-size: 0.85em; color: #555; min-width: 50px;">📅 Tarih:</label>
+                            <input type="datetime-local" id="schedule-date-${matchId}" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em; flex: 1; min-width: 180px;" value="${match.scheduledDate ? toLocalISOString(new Date(match.scheduledDate)) : ''}">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                            <label style="font-size: 0.85em; color: #555; min-width: 50px;">📍 Yer:</label>
+                            <input type="text" id="schedule-loc-${matchId}" placeholder="Örn: 6. kat, toplantı odası" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em; flex: 1; min-width: 180px;" value="${locationText}">
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button onclick="saveMatchSchedule('${matchId}')" style="background: #28a745; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em;">✅ Kaydet</button>
+                            <button onclick="toggleScheduleEdit('${matchId}')" style="background: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">❌ İptal</button>
+                            ${hasSchedule ? `<button onclick="clearMatchSchedule('${matchId}')" style="background: #dc3545; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">🗑️ Temizle</button>` : ''}
+                        </div>
+                    </div>
+                `;
             }
             
             card.innerHTML = `
                 <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
                     <div class="match-number" style="background: #667eea; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${index + 1}</div>
-                    <div class="player">
-                        ${player1 ? `👤 ${player1.name}` : '❓ Bilinmeyen'}
+                    <div class="player" style="${match.result && match.result.winner === match.player1Id ? 'font-weight: bold; color: #28a745;' : ''}">
+                        ${player1 ? `${getGenderIcon(player1.gender)} ${player1.name}` : '❓ Bilinmeyen'} ${match.result && match.result.winner === match.player1Id ? '🏆' : ''}
                     </div>
                     <div class="vs">VS</div>
-                    <div class="player">
-                        ${player2 ? `👤 ${player2.name}` : '❓ Bilinmeyen'}
+                    <div class="player" style="${match.result && match.result.winner === match.player2Id ? 'font-weight: bold; color: #28a745;' : ''}">
+                        ${player2 ? `${getGenderIcon(player2.gender)} ${player2.name}` : '❓ Bilinmeyen'} ${match.result && match.result.winner === match.player2Id ? '🏆' : ''}
                     </div>
                     <div style="margin-left: 15px; font-weight: bold; font-size: 1.2em; flex-shrink: 0;">
                         ${resultDisplay}
@@ -609,17 +666,12 @@ function updateCurrentRound() {
 }
 
 // ============================================================
-// MATCH SCHEDULING (Admin sets dates for matches)
+// MATCH SCHEDULING (Admin sets date + location for matches)
 // ============================================================
 
-function showSchedulePicker(matchId) {
-    const picker = document.getElementById(`schedule-picker-${matchId}`);
-    if (picker) picker.style.display = 'block';
-}
-
-function hideSchedulePicker(matchId) {
-    const picker = document.getElementById(`schedule-picker-${matchId}`);
-    if (picker) picker.style.display = 'none';
+function toggleScheduleEdit(matchId) {
+    const el = document.getElementById(`schedule-edit-${matchId}`);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function findMatchByMatchId(matchId) {
@@ -634,11 +686,8 @@ function findMatchByMatchId(matchId) {
 }
 
 async function saveMatchSchedule(matchId) {
-    const input = document.getElementById(`schedule-input-${matchId}`);
-    if (!input || !input.value) {
-        showNotification('Lütfen bir tarih seçin', 'error');
-        return;
-    }
+    const dateInput = document.getElementById(`schedule-date-${matchId}`);
+    const locInput = document.getElementById(`schedule-loc-${matchId}`);
     
     const result = findMatchByMatchId(matchId);
     if (!result) {
@@ -646,15 +695,28 @@ async function saveMatchSchedule(matchId) {
         return;
     }
     
-    result.match.scheduledDate = new Date(input.value).toISOString();
+    // Save date if provided
+    if (dateInput && dateInput.value) {
+        result.match.scheduledDate = new Date(dateInput.value).toISOString();
+    }
+    
+    // Save location if provided
+    if (locInput && locInput.value.trim()) {
+        result.match.scheduledLocation = locInput.value.trim();
+    }
+    
+    if (!dateInput?.value && !locInput?.value?.trim()) {
+        showNotification('Tarih veya yer girin', 'error');
+        return;
+    }
     
     const p1 = tournament.participants.find(p => p.id === result.match.player1Id);
     const p2 = tournament.participants.find(p => p.id === result.match.player2Id);
     
-    showNotification('💾 Tarih kaydediliyor...', 'success');
+    showNotification('💾 Kaydediliyor...', 'success');
     await saveDataAndSync();
     updateAllUI();
-    showNotification(`📅 ${p1?.name} vs ${p2?.name} tarihi belirlendi!`, 'success');
+    showNotification(`📅 ${p1?.name} vs ${p2?.name} planlandı!`, 'success');
 }
 
 async function clearMatchSchedule(matchId) {
@@ -662,11 +724,12 @@ async function clearMatchSchedule(matchId) {
     if (!result) return;
     
     delete result.match.scheduledDate;
+    delete result.match.scheduledLocation;
     
-    showNotification('💾 Tarih kaldırılıyor...', 'success');
+    showNotification('💾 Temizleniyor...', 'success');
     await saveDataAndSync();
     updateAllUI();
-    showNotification('📅 Maç tarihi kaldırıldı', 'success');
+    showNotification('🗑️ Maç takvimi temizlendi', 'success');
 }
 
 // ============================================================
@@ -699,9 +762,10 @@ function updateStandings() {
         const total = p.wins + p.losses;
         const rate = total > 0 ? ((p.wins / total) * 100).toFixed(1) : '0.0';
         const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '▪️';
+        const genderIcon = getGenderIcon(p.gender);
         html += `<tr>
             <td>${medal} ${i + 1}</td>
-            <td><strong>${p.name}</strong></td>
+            <td><strong>${genderIcon} ${p.name}</strong></td>
             <td>${p.wins}</td><td>${p.losses}</td><td>${rate}%</td>
             <td>${p.eliminated ? '❌' : '✅'}</td>
         </tr>`;
@@ -739,8 +803,10 @@ function updateMatchResultInputs() {
     activeRound.matches.forEach((match, index) => {
         const p1 = tournament.participants.find(p => p.id === match.player1Id);
         const p2 = tournament.participants.find(p => p.id === match.player2Id);
+        const p1Name = p1 ? `${getGenderIcon(p1.gender)} ${p1.name}` : '?';
+        const p2Name = p2 ? `${getGenderIcon(p2.gender)} ${p2.name}` : '?';
         const score = match.result ? `✅ (${match.result.player1Score}-${match.result.player2Score})` : '⏳';
-        select.innerHTML += `<option value="${index}">${index + 1}. ${p1?.name || '?'} vs ${p2?.name || '?'} ${score}</option>`;
+        select.innerHTML += `<option value="${index}">${index + 1}. ${p1Name} vs ${p2Name} ${score}</option>`;
     });
     
     form.appendChild(select);
@@ -776,7 +842,10 @@ function updateResultInput() {
                 <input type="number" id="score2" value="${match.result?.player2Score ?? ''}" placeholder="0" min="0" max="100">
             </div>
             <div style="flex: 1; text-align: right; min-width: 100px;"><strong>${p2?.name || '?'}</strong></div>
-            <button onclick="saveMatchResult(${index})" class="btn btn-success">💾 Kaydet</button>
+            <div style="display: flex; gap: 5px;">
+                <button onclick="saveMatchResult(${index})" class="btn btn-success">💾 Kaydet</button>
+                ${match.result ? `<button onclick="clearMatchResult(${index})" class="btn btn-danger" style="background: #dc3545; padding: 10px 15px;">🗑️ Sil</button>` : ''}
+            </div>
         </div>
     `;
 }
@@ -831,6 +900,48 @@ async function saveMatchResult(matchIndex) {
     
     showNotification('💾 Kaydediliyor...', 'success');
     await saveDataAndSync();
+}
+
+async function clearMatchResult(matchIndex) {
+    if (!confirm('Bu maçın sonucunu silmek ve "Bekleniyor" durumuna döndürmek istediğinize emin misiniz?')) return;
+    
+    const activeRound = tournament.rounds.find(r => !r.completed && r.drawCompleted);
+    if (!activeRound) return;
+    
+    const match = activeRound.matches[matchIndex];
+    if (!match.result) return;
+    
+    const player1 = tournament.participants.find(p => p.id === match.player1Id);
+    const player2 = tournament.participants.find(p => p.id === match.player2Id);
+    
+    // Undo stats
+    if (match.result.winner === match.player1Id) {
+        if (player1) player1.wins = Math.max(0, player1.wins - 1);
+        if (player2) player2.losses = Math.max(0, player2.losses - 1);
+    } else {
+        if (player2) player2.wins = Math.max(0, player2.wins - 1);
+        if (player1) player1.losses = Math.max(0, player1.losses - 1);
+    }
+    
+    // Reset round/tournament state if it was completed
+    if (activeRound.completed) {
+        activeRound.completed = false;
+        // Search back to see if we need to undo eliminations
+        activeRound.matches.forEach(m => {
+            const loserId = m.result?.winner === m.player1Id ? m.player2Id : m.player1Id;
+            const loser = tournament.participants.find(p => p.id === loserId);
+            if (loser) loser.eliminated = false;
+        });
+        // We don't easily know if currentRound should be decremented without checking other rounds, 
+        // but typically a result clear at this level means the round is definitely not 'done'.
+    }
+    
+    match.result = null;
+    
+    showNotification('💾 Siliniyor...', 'success');
+    await saveDataAndSync();
+    updateAllUI();
+    showNotification('Maç sonucu silindi! 🔄', 'success');
 }
 
 // ============================================================
@@ -1164,6 +1275,7 @@ function adminLogin() {
         document.getElementById('admin-panel-content').style.display = 'block';
         
         updateAllUI();
+        createGitHubBackup(true); // Otomatik yedek (Giriş)
         
         const token = getGitHubToken();
         if (!token) {
@@ -1192,7 +1304,7 @@ function cancelAdminLogin() {
     
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('overview').classList.add('active');
+    document.getElementById('calendar').classList.add('active');
     document.querySelectorAll('.nav-btn')[0].classList.add('active');
 }
 
@@ -1302,6 +1414,156 @@ function uploadData(event) {
         }
     };
     reader.readAsText(file);
+}
+
+// ============================================================
+// BACKUP & RESTORE SYSTEM (GitHub)
+// ============================================================
+
+function getTimestampedFilename() {
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const mm = pad(now.getMonth() + 1);
+    const dd = pad(now.getDate());
+    const hh = pad(now.getHours());
+    const min = pad(now.getMinutes());
+    const sec = pad(now.getSeconds());
+    return `backups/tavla_backup_${yyyy}${mm}${dd}_${hh}${min}${sec}.json`;
+}
+
+async function createGitHubBackup(isAuto = false, customMsg = "") {
+    const token = getGitHubToken();
+    if (!token) return false;
+    
+    const filename = getTimestampedFilename();
+    const fileUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filename}`;
+    
+    try {
+        const content = JSON.stringify(tournament, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(content)));
+        
+        const response = await fetch(fileUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: customMsg || (isAuto ? `Otomatik Yedek - ${new Date().toLocaleString('tr-TR')}` : `Manuel Yedek - ${new Date().toLocaleString('tr-TR')}`),
+                content: encodedContent,
+                branch: GITHUB_BRANCH
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Backup error: ${response.status}`);
+        }
+        
+        if (!isAuto) showNotification('📦 Yedek GitHub\'a başarıyla yüklendi: ' + filename.split('/').pop(), 'success');
+        updateBackupsListUI();
+        return true;
+    } catch (error) {
+        console.error('❌ Yedekleme hatası:', error);
+        if (!isAuto) showNotification('❌ Yedekleme hatası: ' + error.message, 'error');
+        return false;
+    }
+}
+
+async function fetchBackupsList() {
+    const token = getGitHubToken();
+    if (!token) return [];
+    
+    try {
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/backups`;
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (response.status === 404) return []; // Table doesn't exist yet
+        if (!response.ok) return [];
+        
+        const files = await response.json();
+        return files
+            .filter(f => f.name.startsWith('tavla_backup_') && f.name.endsWith('.json'))
+            .sort((a, b) => b.name.localeCompare(a.name)); // Newest first
+            
+    } catch (error) {
+        console.error('❌ Yedek listesi alınamadı:', error);
+        return [];
+    }
+}
+
+async function restoreFromBackup(path) {
+    if (!confirm('⚠️ Bu yedeği geri yüklemek istediğinize emin misiniz?\nMevcut tüm veriler silinecek ve seçilen yedeğe dönülecektir.')) return;
+    
+    const token = getGitHubToken();
+    if (!token) return;
+    
+    showNotification('🔄 Geri yükleme öncesi mevcut veriler yedekleniyor...', 'success');
+    await createGitHubBackup(true, `Geri yükleme öncesi otomatik yedek - ${new Date().toLocaleString('tr-TR')}`);
+    
+    showNotification('📥 Yedek dosyası indiriliyor...', 'success');
+    
+    try {
+        const response = await fetch(`https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}?t=${Date.now()}`);
+        if (!response.ok) throw new Error('Yedek indirilemedi');
+        
+        const backupData = await response.json();
+        tournament = backupData;
+        
+        showNotification('💾 Ana veriler güncelleniyor...', 'success');
+        await saveDataAndSync();
+        
+        showNotification('✅ Turnuva başarıyla geri yüklendi!', 'success');
+        updateBackupsListUI();
+    } catch (error) {
+        console.error('❌ Geri yükleme hatası:', error);
+        showNotification('❌ Geri yükleme hatası: ' + error.message, 'error');
+    }
+}
+
+async function updateBackupsListUI() {
+    const container = document.getElementById('backups-list');
+    if (!container) return;
+    
+    container.innerHTML = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 10px;">Yedekler listeleniyor...</p>';
+    
+    const backups = await fetchBackupsList();
+    
+    if (backups.length === 0) {
+        container.innerHTML = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 10px;">Henüz yedek bulunamadı.</p>';
+        return;
+    }
+    
+    let html = '<div style="max-height: 250px; overflow-y: auto; border: 1px solid #edf2f7; border-radius: 12px; background: white;">';
+    
+    // Show only last 5 backups
+    backups.slice(0, 5).forEach((f, idx) => {
+        // Extract date from tavla_backup_YYYYMMDD_HHMMSS.json
+        const parts = f.name.replace('tavla_backup_', '').replace('.json', '').split('_');
+        const dateStr = parts[0];
+        const timeStr = parts[1];
+        
+        const formatted = `${dateStr.slice(6,8)}.${dateStr.slice(4,6)}.${dateStr.slice(0,4)} ${timeStr.slice(0,2)}:${timeStr.slice(2,4)}`;
+        
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; ${idx < 4 ? 'border-bottom: 1px solid #f0f0f0;' : ''}">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.2em;">📄</span>
+                    <span style="font-size: 0.9em; color: #2d3748; font-weight: 600;">${formatted}</span>
+                </div>
+                <button onclick="restoreFromBackup('${f.path}')" style="background: #ebf4ff; color: #667eea; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8em; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#667eea'; this.style.color='white'" onmouseout="this.style.background='#ebf4ff'; this.style.color='#667eea'">Geri Yükle</button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // ============================================================
@@ -1496,4 +1758,329 @@ function updateManualDrawSection() {
     
     content += '</div>';
     section.innerHTML = content;
+}
+
+// ============================================================
+// CALENDAR VIEW
+// ============================================================
+
+function changeCalendarMonth(delta) {
+    calendarDate.setMonth(calendarDate.getMonth() + delta);
+    updateCalendar();
+}
+
+function updateCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const title = document.getElementById('calendar-month-title');
+    if (!grid || !title) return;
+    
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    
+    // Month name in Turkish
+    const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    title.textContent = `${monthNames[month]} ${year}`;
+    
+    // Gather all scheduled matches
+    const scheduledMatches = [];
+    tournament.rounds.forEach(round => {
+        if (!round.matches) return;
+        round.matches.forEach((match, idx) => {
+            if (match.scheduledDate) {
+                const p1 = tournament.participants.find(p => p.id === match.player1Id);
+                const p2 = tournament.participants.find(p => p.id === match.player2Id);
+                scheduledMatches.push({
+                    date: new Date(match.scheduledDate),
+                    p1Name: p1?.name || '?',
+                    p2Name: p2?.name || '?',
+                    location: match.scheduledLocation || '',
+                    roundName: round.name,
+                    hasResult: !!match.result,
+                    matchIndex: idx
+                });
+            }
+        });
+    });
+    
+    // Build calendar grid
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+    const daysInMonth = lastDay.getDate();
+    const today = new Date();
+    
+    const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    
+    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 0.85em;">`;
+    
+    // Day headers
+    dayNames.forEach(d => {
+        html += `<div style="text-align: center; font-weight: bold; color: #667eea; padding: 8px 4px; background: #f0f0ff; border-radius: 6px;">${d}</div>`;
+    });
+    
+    // Empty cells before first day
+    for (let i = 0; i < startDayOfWeek; i++) {
+        html += `<div style="min-height: 80px;"></div>`;
+    }
+    
+    // Day cells
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+        
+        // Find matches for this day
+        const dayMatches = scheduledMatches.filter(m => 
+            m.date.getFullYear() === year && 
+            m.date.getMonth() === month && 
+            m.date.getDate() === day
+        );
+        
+        const hasMatches = dayMatches.length > 0;
+        const bgColor = isToday ? '#667eea' : (hasMatches ? '#f8f9ff' : '#ffffff');
+        const textColor = isToday ? '#ffffff' : '#333333';
+        const borderColor = isToday ? '#667eea' : (hasMatches ? '#667eea' : '#eef0f5');
+        const shadow = hasMatches ? '0 4px 12px rgba(102, 126, 234, 0.15)' : 'none';
+        
+        html += `
+            <div 
+                onclick="${hasMatches ? `showDayDetail(${year}, ${month}, ${day})` : ''}" 
+                style="min-height: 100px; background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 12px; padding: 8px; overflow: hidden; cursor: ${hasMatches ? 'pointer' : 'default'}; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: ${shadow}; position: relative;"
+                ${hasMatches ? 'onmouseover="this.style.transform=\'translateY(-5px)\'; this.style.boxShadow=\'0 8px 25px rgba(102, 126, 234, 0.25)\'; this.style.zIndex=\'10\'" onmouseout="this.style.transform=\'translateY(0)\'; this.style.boxShadow=\'' + shadow + '\'; this.style.zIndex=\'1\'"' : ''}
+            >
+                <div style="font-weight: 700; color: ${textColor}; margin-bottom: 6px; font-size: 1em; display: flex; align-items: center; justify-content: space-between;">
+                    <span>${day}</span>
+                    ${isToday ? '<span style="font-size: 0.6em; background: rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 20px;">Bugün</span>' : ''}
+                </div>
+        `;
+        
+        // Show matches summary in cell
+        dayMatches.forEach(m => {
+            const time = m.date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            const matchBg = m.hasResult ? 'linear-gradient(135deg, #28a745, #218838)' : 'linear-gradient(135deg, #667eea, #764ba2)';
+            
+            html += `
+                <div style="background: ${matchBg}; color: white; padding: 4px 6px; border-radius: 6px; margin: 3px 0; font-size: 0.7em; line-height: 1.2; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 2px solid rgba(255,255,255,0.4);">
+                    <div style="font-weight: 700; opacity: 0.9;">⏰ ${time}</div>
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9em;">
+                        ${m.p1Name.split(' ')[0]} v ${m.p2Name.split(' ')[0]}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+    }
+    
+    html += `</div>`;
+    
+    // Legend
+    html += `
+        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 25px; padding: 15px; background: #f8f9ff; border-radius: 12px; font-size: 0.85em; color: #555; flex-wrap: wrap; box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 14px; height: 14px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 3px;"></span> 
+                <span>Planlanmış</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 14px; height: 14px; background: linear-gradient(135deg, #28a745, #218838); border-radius: 3px;"></span> 
+                <span>Tamamlanmış</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 14px; height: 14px; background: #667eea; border-radius: 3px; border: 1px solid white; box-shadow: 0 0 0 1px #667eea;"></span> 
+                <span>Bugün</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; color: #764ba2; font-weight: 600;">
+                <span>💡 Detaylar için güne tıklayın</span>
+            </div>
+        </div>
+    `;
+    
+    // Upcoming matches list below calendar
+    const upcoming = scheduledMatches
+        .filter(m => !m.hasResult && m.date >= today)
+        .sort((a, b) => a.date - b.date);
+    
+    if (upcoming.length > 0) {
+        html += `
+            <div style="margin-top: 35px;">
+                <h3 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-size: 1.4em;">
+                    <span style="font-size: 1.25em;">📋</span> Yaklaşan Mücadeleler
+                </h3>
+        `;
+        
+        upcoming.forEach(m => {
+            const dateStr = m.date.toLocaleString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long', hour: '2-digit', minute: '2-digit' });
+            html += `
+                <div style="background: white; border: 1px solid #eef0f5; border-left: 5px solid #764ba2; border-radius: 12px; padding: 18px; margin-bottom: 12px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateX(8px)'; this.style.borderColor='#e0e4f0'; this.style.boxShadow='0 6px 15px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='#eef0f5'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.03)'">
+                    <div style="flex: 1; min-width: 250px;">
+                        <div style="font-weight: 700; color: #1a202c; font-size: 1.15em; margin-bottom: 6px; display: flex; align-items: center; gap: 12px;">
+                            <span style="color: #667eea;">${getGenderIcon(m.p1Gender)}</span> ${m.p1Name} ${m.result && m.result.winner === m.player1Id ? '🏆' : ''}
+                            <span style="color: #cbd5e0; font-size: 0.9em; font-weight: 400;">VS</span> 
+                            ${m.p2Name} ${m.result && m.result.winner === m.player2Id ? '🏆' : ''} <span style="color: #667eea;">${getGenderIcon(m.p2Gender)}</span>
+                        </div>
+                        <div style="font-size: 0.9em; display: flex; align-items: center; gap: 15px; color: #718096;">
+                            <span style="display: flex; align-items: center; gap: 5px;">📅 ${dateStr}</span>
+                            ${m.location ? `<span style="display: flex; align-items: center; gap: 5px; color: #667eea;">📍 ${m.location}</span>` : ''}
+                        </div>
+                    </div>
+                    <div style="background: #f7fafc; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 1.1em; font-weight: 600; border: 1px solid #edf2f7;">
+                        ${m.roundName}
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+    
+    grid.innerHTML = html;
+}
+
+// ============================================================
+// DAY DETAIL MODAL
+// ============================================================
+
+function showDayDetail(year, month, day) {
+    // Gather matches for this specific day
+    const dayMatches = [];
+    tournament.rounds.forEach(round => {
+        if (!round.matches) return;
+        round.matches.forEach((match, idx) => {
+            if (!match.scheduledDate) return;
+            const d = new Date(match.scheduledDate);
+            if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) {
+                const p1 = tournament.participants.find(p => p.id === match.player1Id);
+                const p2 = tournament.participants.find(p => p.id === match.player2Id);
+                dayMatches.push({
+                    date: d,
+                    p1Name: p1?.name || '?',
+                    p2Name: p2?.name || '?',
+                    player1Gender: p1?.gender || 'male',
+                    player2Gender: p2?.gender || 'male',
+                    location: match.scheduledLocation || '',
+                    roundName: round.name,
+                    hasResult: !!match.result,
+                    result: match.result,
+                    player1Id: match.player1Id,
+                    player2Id: match.player2Id,
+                    matchIndex: idx
+                });
+            }
+        });
+    });
+    
+    if (dayMatches.length === 0) return;
+    
+    // Sort by time
+    dayMatches.sort((a, b) => a.date - b.date);
+    
+    // Group by time slot
+    const timeSlots = {};
+    dayMatches.forEach(m => {
+        const timeKey = m.date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        if (!timeSlots[timeKey]) timeSlots[timeKey] = [];
+        timeSlots[timeKey].push(m);
+    });
+    
+    // Format date
+    const dateObj = new Date(year, month, day);
+    const dateStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+    
+    // Build modal content
+    let content = '';
+    
+    Object.entries(timeSlots).forEach(([time, matches]) => {
+        const isMultiple = matches.length > 1;
+        content += `
+            <div style="margin-bottom: 25px; animation: slideIn 0.3s ease-out;">
+                <div style="background: #f8f9ff; padding: 12px 20px; border-radius: 12px; border-left: 5px solid #667eea; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+                    <div style="font-weight: 800; color: #2d3748; font-size: 1.2em; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.1em;">⏰</span> Saat ${time}
+                    </div>
+                    ${isMultiple ? `<span style="background: #ebf4ff; color: #4c51bf; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 700; border: 1px solid #c3dafe;">🎲 ${matches.length} Mücadele</span>` : ''}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+        `;
+        
+        matches.forEach((m, i) => {
+            const statusColor = m.hasResult ? '#38a169' : '#667eea';
+            const statusBg = m.hasResult ? '#f0fff4' : '#f0f5ff';
+            
+            let resultHTML = '';
+            if (m.hasResult) {
+                const isP1Winner = m.result.winner === m.player1Id;
+                resultHTML = `
+                    <div style="margin-top: 15px; padding: 12px; background: #fdfdfd; border-radius: 10px; border: 1px dashed #e2e8f0; text-align: center;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.4em; font-weight: 800;">
+                            <span style="color: ${isP1Winner ? '#38a169' : '#e53e3e'}">${m.result.player1Score}</span>
+                            <span style="color: #cbd5e0; font-weight: 400;">-</span>
+                            <span style="color: ${!isP1Winner ? '#38a169' : '#e53e3e'}">${m.result.player2Score}</span>
+                        </div>
+                        <div style="font-size: 0.85em; color: #38a169; font-weight: 700; margin-top: 5px;">🏆 ${isP1Winner ? m.p1Name : m.p2Name} Kazandı</div>
+                    </div>
+                `;
+            }
+            
+            content += `
+                <div style="background: white; border: 1px solid #edf2f7; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); position: relative; display: flex; flex-direction: column;">
+                    ${isMultiple ? `<div style="position: absolute; top: 12px; right: 12px; background: #f7fafc; color: #718096; padding: 4px 10px; border-radius: 8px; font-size: 0.75em; font-weight: 700; border: 1px solid #edf2f7;">Masa ${i + 1}</div>` : ''}
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <span style="background: ${statusBg}; color: ${statusColor}; padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: 700;">${m.roundName}</span>
+                        <span style="font-size: 0.8em; color: #a0aec0;">${m.hasResult ? '✅ Tamamlandı' : '⌛ Bekliyor'}</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 5px 0;">
+                        <div style="text-align: center; flex: 1;">
+                            <div style="width: 45px; height: 45px; background: #ebf4ff; color: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; margin: 0 auto 8px;">${getGenderIcon(m.player1Gender)}</div>
+                            <div style="font-weight: 700; color: #2d3748; font-size: 0.95em; line-height: 1.2;">${m.p1Name}</div>
+                        </div>
+                        
+                        <div style="color: #cbd5e0; font-weight: 800; font-size: 0.9em; padding: 4px 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">VS</div>
+                        
+                        <div style="text-align: center; flex: 1;">
+                            <div style="width: 45px; height: 45px; background: #ebf4ff; color: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; margin: 0 auto 8px;">${getGenderIcon(m.player2Gender)}</div>
+                            <div style="font-weight: 700; color: #2d3748; font-size: 0.95em; line-height: 1.2;">${m.p2Name}</div>
+                        </div>
+                    </div>
+                    
+                    ${m.location ? `<div style="margin-top: 15px; font-size: 0.85em; color: #667eea; background: #f0f7ff; padding: 6px 12px; border-radius: 8px; display: flex; align-items: center; gap: 6px;"><span>📍</span> ${m.location}</div>` : ''}
+                    ${resultHTML}
+                </div>
+            `;
+        });
+        
+        content += `</div></div>`;
+    });
+    
+    // Remove existing modal if any
+    const existing = document.getElementById('day-detail-modal');
+    if (existing) existing.remove();
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'day-detail-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26, 32, 44, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease-out;';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+        <div style="background: #ffffff; border-radius: 24px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column;">
+            <div style="background: white; border-bottom: 1px solid #edf2f7; padding: 25px 30px; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="background: linear-gradient(135deg, #667eea, #764ba2); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; color: white; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);">📅</div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.4em; color: #1a202c; font-weight: 800;">${dateStr}</h3>
+                        <p style="margin: 3px 0 0; color: #718096; font-size: 0.9em; font-weight: 500;">Günlük Maç Programı</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('day-detail-modal').remove()" style="background: #f7fafc; border: none; color: #a0aec0; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 1.2em;" onmouseover="this.style.background='#edf2f7'; this.style.color='#4a5568'" onmouseout="this.style.background='#f7fafc'; this.style.color='#a0aec0'">✕</button>
+            </div>
+            <div style="padding: 30px; background: #fdfdfd;">
+                ${content}
+            </div>
+            <div style="padding: 20px 30px; background: #f8fafc; border-top: 1px solid #edf2f7; text-align: center; border-radius: 0 0 24px 24px;">
+                <button onclick="document.getElementById('day-detail-modal').remove()" style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(102, 126, 234, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(102, 126, 234, 0.2)'">Kapat</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }

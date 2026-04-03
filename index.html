@@ -20,15 +20,17 @@
 
         <!-- Navigation -->
         <nav class="nav">
-            <button class="nav-btn active" onclick="showTab('overview')">📊 Genel Bakış</button>
-            <button class="nav-btn" onclick="showTab('schedule')">📅 Tarihler</button>
+            <button class="nav-btn active" onclick="showTab('calendar')">🗓️ Karşılaşmalar</button>
             <button class="nav-btn" onclick="showTab('current-round')">🎮 Mevcut Tur</button>
+            <button class="nav-btn" onclick="showTab('schedule')">📅 Tarihler</button>
             <button class="nav-btn" onclick="showTab('standings')">🏆 Puan Tablosu</button>
+            <button class="nav-btn" onclick="showTab('overview')">👥 Katılımcılar</button>
             <button class="nav-btn" onclick="showTab('admin')">⚙️ Yönetim</button>
         </nav>
 
         <!-- Overview Tab -->
-        <section id="overview" class="tab-content active">
+        <section id="overview" class="tab-content">
+            <h2>👥 Katılımcılar</h2>
             <div class="overview-grid">
                 <div class="stat-card">
                     <h3>👥 Katılımcılar</h3>
@@ -52,7 +54,7 @@
 
         <!-- Schedule Tab -->
         <section id="schedule" class="tab-content">
-            <h2>📅 Turnuva Takvimi</h2>
+            <h2>📅 Tarihler</h2>
             <div id="schedule-list" class="schedule-list"></div>
         </section>
 
@@ -66,6 +68,17 @@
         <section id="standings" class="tab-content">
             <h2>🏆 Puan Tablosu</h2>
             <div id="standings-table" class="standings-table"></div>
+        </section>
+
+        <!-- Calendar Tab -->
+        <section id="calendar" class="tab-content active">
+            <h2>🗓️ Karşılaşmalar</h2>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <button onclick="changeCalendarMonth(-1)" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold;">◀</button>
+                <h3 id="calendar-month-title" style="margin: 0; color: #667eea; min-width: 200px; text-align: center;">Nisan 2026</h3>
+                <button onclick="changeCalendarMonth(1)" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold;">▶</button>
+            </div>
+            <div id="calendar-grid" style="width: 100%;"></div>
         </section>
 
         <!-- Admin Tab -->
@@ -93,10 +106,20 @@
                     <!-- Katılımcı Yönetimi -->
                     <div class="admin-section">
                         <h3>👥 Katılımcı Yönetimi</h3>
-                        <div class="admin-form">
-                            <input type="text" id="participant-input" placeholder="Katılımcı adı..." class="input">
-                            <button onclick="addParticipant()" class="btn btn-primary">➕ Ekle</button>
-                            <button onclick="clearAllParticipants()" class="btn btn-danger">🗑️ Hepsini Sil</button>
+                        <div class="admin-form" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="participant-input" placeholder="Katılımcı adı..." class="input" style="flex: 1;">
+                                <button onclick="addParticipant()" class="btn btn-primary">➕ Ekle</button>
+                                <button onclick="clearAllParticipants()" class="btn btn-danger">🗑️ Hepsini Sil</button>
+                            </div>
+                            <div style="display: flex; gap: 20px; padding: 10px; background: #f8f9ff; border-radius: 8px; border: 1px solid #edf2f7;">
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9em; font-weight: bold; color: #4a5568;">
+                                    <input type="radio" name="gender-input" value="male" checked> 👨 Erkek
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9em; font-weight: bold; color: #4a5568;">
+                                    <input type="radio" name="gender-input" value="female"> 👩 Kadın
+                                </label>
+                            </div>
                         </div>
                         <div id="participants-manager" class="participants-manager"></div>
                     </div>
@@ -149,9 +172,25 @@
                     <!-- Veri İşlemleri -->
                     <div class="admin-section">
                         <h3>💾 Veri İşlemleri</h3>
-                        <button onclick="downloadData()" class="btn btn-secondary">📥 Veriyi İndir (JSON)</button>
-                        <button onclick="document.getElementById('file-input').click()" class="btn btn-secondary">📤 Veriyi Yükle</button>
-                        <button onclick="resetTournament()" class="btn btn-danger">🔴 Turnuvayı Sıfırla</button>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <button onclick="downloadData()" class="btn btn-secondary">📥 JSON İndir</button>
+                            <button onclick="document.getElementById('file-input').click()" class="btn btn-secondary">📤 JSON Yükle</button>
+                            <button onclick="createGitHubBackup()" class="btn btn-primary" style="background: #38a169;">☁️ Şimdi Yedek Al</button>
+                            <button onclick="resetTournament()" class="btn btn-danger">🔴 Turnuvayı Sıfırla</button>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #edf2f7;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #4a5568; display: flex; align-items: center; gap: 8px;">
+                                📅 Geçmiş Yedekler (Son 5)
+                            </h4>
+                            <div id="backups-list">
+                                <p style="color: #999; font-size: 0.85em; text-align: center;">Yedekler yükleniyor...</p>
+                            </div>
+                            <p style="margin: 10px 0 0 0; font-size: 0.75em; color: #a0aec0; font-style: italic;">
+                                * Her admin girişinde otomatik yedek alınır.
+                            </p>
+                        </div>
+                        
                         <input type="file" id="file-input" style="display:none;" accept=".json" onchange="uploadData(event)">
                     </div>
                 </div>
