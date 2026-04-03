@@ -9,6 +9,7 @@ const GITHUB_REPO = 'tavla';
 const GITHUB_BRANCH = 'main';
 const GITHUB_FILE_PATH = 'data.json';
 
+
 // Data Structure
 let tournament = {
     name: "Tavla Turnuvası",
@@ -79,7 +80,6 @@ async function saveDataToGitHub() {
     if (!token) {
         console.warn('⚠️ GitHub token yok');
         saveToLocalStorage();
-        showNotification('⚠️ GitHub token girilmemiş! Admin panelinden girin.', 'error');
         return false;
     }
     
@@ -512,6 +512,8 @@ function updateCurrentRound() {
             const card = document.createElement('div');
             card.className = 'match-card';
             card.style.animation = `slideIn 0.3s ease-out ${index * 0.1}s both`;
+            card.style.flexDirection = 'column';
+            card.style.gap = '10px';
             
             let resultDisplay = '⏳';
             if (match.result) {
@@ -521,23 +523,129 @@ function updateCurrentRound() {
                 resultDisplay = `<span style="${p1Style}">${match.result.player1Score}</span> - <span style="${p2Style}">${match.result.player2Score}</span>`;
             }
             
+            // Match schedule date display
+            let scheduleHTML = '';
+            if (!match.result) {
+                const scheduleDate = match.scheduledDate ? new Date(match.scheduledDate).toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : null;
+                const matchId = `${round.roundNumber}_${index}`;
+                
+                if (scheduleDate) {
+                    // Everyone sees the scheduled date
+                    scheduleHTML = `
+                        <div style="width: 100%; border-top: 1px solid #e0e0e0; padding-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="color: #667eea; font-size: 0.85em;">📅 Planlanan: <strong>${scheduleDate}</strong></span>
+                            ${isAdminLoggedIn ? `<button onclick="clearMatchSchedule('${matchId}')" style="background: none; border: none; cursor: pointer; font-size: 0.85em; color: #dc3545;" title="Tarihi kaldır">❌</button>` : ''}
+                            ${isAdminLoggedIn ? `<button onclick="showSchedulePicker('${matchId}')" style="margin-left: auto; background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">📅 Değiştir</button>` : ''}
+                        </div>
+                        <div id="schedule-picker-${matchId}" style="display: none; width: 100%; padding: 8px; background: #f0f0ff; border-radius: 8px;">
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <input type="datetime-local" id="schedule-input-${matchId}" style="padding: 6px; border: 1px solid #667eea; border-radius: 5px; font-size: 0.9em;" value="${match.scheduledDate ? new Date(match.scheduledDate).toISOString().slice(0,16) : ''}">
+                                <button onclick="saveMatchSchedule('${matchId}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85em;">✅ Kaydet</button>
+                                <button onclick="hideSchedulePicker('${matchId}')" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">❌ İptal</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // No date yet
+                    scheduleHTML = `
+                        <div style="width: 100%; border-top: 1px solid #e0e0e0; padding-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="color: #999; font-size: 0.85em;">📅 Henüz tarih belirlenmemiş</span>
+                            ${isAdminLoggedIn ? `
+                                <button onclick="showSchedulePicker('${matchId}')" style="margin-left: auto; background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">📅 Tarih Seç</button>
+                            ` : ''}
+                        </div>
+                        <div id="schedule-picker-${matchId}" style="display: none; width: 100%; padding: 8px; background: #f0f0ff; border-radius: 8px;">
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <input type="datetime-local" id="schedule-input-${matchId}" style="padding: 6px; border: 1px solid #667eea; border-radius: 5px; font-size: 0.9em;">
+                                <button onclick="saveMatchSchedule('${matchId}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85em;">✅ Kaydet</button>
+                                <button onclick="hideSchedulePicker('${matchId}')" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">❌ İptal</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
             card.innerHTML = `
-                <div class="match-number" style="background: #667eea; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${index + 1}</div>
-                <div class="player">
-                    ${player1 ? `👤 ${player1.name}` : '❓ Bilinmeyen'}
+                <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+                    <div class="match-number" style="background: #667eea; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${index + 1}</div>
+                    <div class="player">
+                        ${player1 ? `👤 ${player1.name}` : '❓ Bilinmeyen'}
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="player">
+                        ${player2 ? `👤 ${player2.name}` : '❓ Bilinmeyen'}
+                    </div>
+                    <div style="margin-left: 15px; font-weight: bold; font-size: 1.2em; flex-shrink: 0;">
+                        ${resultDisplay}
+                    </div>
                 </div>
-                <div class="vs">VS</div>
-                <div class="player">
-                    ${player2 ? `👤 ${player2.name}` : '❓ Bilinmeyen'}
-                </div>
-                <div style="margin-left: 15px; font-weight: bold; font-size: 1.2em; flex-shrink: 0;">
-                    ${resultDisplay}
-                </div>
+                ${scheduleHTML}
             `;
             
             matchesContainer.appendChild(card);
         });
     });
+}
+
+// ============================================================
+// MATCH SCHEDULING (Admin sets dates for matches)
+// ============================================================
+
+function showSchedulePicker(matchId) {
+    const picker = document.getElementById(`schedule-picker-${matchId}`);
+    if (picker) picker.style.display = 'block';
+}
+
+function hideSchedulePicker(matchId) {
+    const picker = document.getElementById(`schedule-picker-${matchId}`);
+    if (picker) picker.style.display = 'none';
+}
+
+function findMatchByMatchId(matchId) {
+    const parts = matchId.split('_');
+    const roundNumber = parseInt(parts[0]);
+    const matchIndex = parseInt(parts[1]);
+    
+    const round = tournament.rounds.find(r => r.roundNumber === roundNumber);
+    if (!round || !round.matches || matchIndex >= round.matches.length) return null;
+    
+    return { round, match: round.matches[matchIndex], matchIndex };
+}
+
+async function saveMatchSchedule(matchId) {
+    const input = document.getElementById(`schedule-input-${matchId}`);
+    if (!input || !input.value) {
+        showNotification('Lütfen bir tarih seçin', 'error');
+        return;
+    }
+    
+    const result = findMatchByMatchId(matchId);
+    if (!result) {
+        showNotification('Maç bulunamadı', 'error');
+        return;
+    }
+    
+    result.match.scheduledDate = new Date(input.value).toISOString();
+    
+    const p1 = tournament.participants.find(p => p.id === result.match.player1Id);
+    const p2 = tournament.participants.find(p => p.id === result.match.player2Id);
+    
+    showNotification('💾 Tarih kaydediliyor...', 'success');
+    await saveDataAndSync();
+    updateAllUI();
+    showNotification(`📅 ${p1?.name} vs ${p2?.name} tarihi belirlendi!`, 'success');
+}
+
+async function clearMatchSchedule(matchId) {
+    const result = findMatchByMatchId(matchId);
+    if (!result) return;
+    
+    delete result.match.scheduledDate;
+    
+    showNotification('💾 Tarih kaldırılıyor...', 'success');
+    await saveDataAndSync();
+    updateAllUI();
+    showNotification('📅 Maç tarihi kaldırıldı', 'success');
 }
 
 // ============================================================
@@ -1229,12 +1337,12 @@ function updateRoundsManager() {
 
 function updateRoundName(index, name) {
     tournament.rounds[index].name = name;
-    saveData();
+    saveDataAndSync();
 }
 
 function updateRoundDate(index, dateStr) {
     tournament.rounds[index].drawDate = new Date(dateStr).toISOString();
-    saveData();
+    saveDataAndSync();
 }
 
 function deleteRound(index) {
