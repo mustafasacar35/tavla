@@ -135,7 +135,7 @@
     },
     {
       "id": 3,
-      "name": "Final",
+      "name": "3. Tur",
       "roundNumber": 3,
       "drawDate": "2026-04-07T17:00:00Z",
       "completed": false,
@@ -399,5 +399,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-03T15:16:17.836Z"
+  "lastUpdated": "2026-04-03T15:16:24.824Z"
 }
