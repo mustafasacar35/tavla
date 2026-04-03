@@ -23,12 +23,44 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load data from GitHub
 async function loadDataFromGitHub() {
     try {
+        // First, save any existing matches from localStorage before clearing
+        const localBackup = localStorage.getItem('tavlaTournament');
+        let savedMatches = {};
+        
+        if (localBackup) {
+            try {
+                const localData = JSON.parse(localBackup);
+                // Save all matches that have been completed/started
+                if (localData.rounds) {
+                    localData.rounds.forEach((round, idx) => {
+                        if (round.matches && round.matches.length > 0) {
+                            savedMatches[idx] = round.matches;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('LocalStorage backup parse hatası');
+            }
+        }
+        
         const url = 'https://raw.githubusercontent.com/mustafasacar35/tavla/main/data.json';
         const response = await fetch(url);
         const data = await response.json();
         tournament = data;
-        localStorage.removeItem('tavlaTournament'); // Clear old cache first
-        saveData(); // Save fresh data to localStorage
+        
+        // Restore previously saved matches
+        if (tournament.rounds) {
+            tournament.rounds.forEach((round, idx) => {
+                if (savedMatches[idx] && savedMatches[idx].length > 0) {
+                    round.matches = savedMatches[idx];
+                    round.drawCompleted = true; // Mark as already drawn
+                    console.log(`✅ ${round.name} maçları localStorage'den restore edildi`);
+                }
+            });
+        }
+        
+        localStorage.removeItem('tavlaTournament'); // Clear old cache
+        saveData(); // Save merged data to localStorage
     } catch (error) {
         console.log('GitHub\'dan load edilemedi, localStorage\'dan yükleniyor', error);
         loadData();
