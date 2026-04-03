@@ -708,8 +708,47 @@ async function saveMatchResult(matchIndex) {
 // *** DRAW SYSTEM - CORE ***
 // ============================================================
 
+// Check if previous round is fully completed (all results entered)
+function isPreviousRoundCompleted(roundIndex) {
+    if (roundIndex === 0) return true; // First round has no previous
+    
+    const prevRound = tournament.rounds[roundIndex - 1];
+    if (!prevRound) return true;
+    
+    // Previous round must have draw done
+    if (!prevRound.drawCompleted || !prevRound.matches || prevRound.matches.length === 0) {
+        return false;
+    }
+    
+    // ALL matches in previous round must have results
+    const allResultsEntered = prevRound.matches.every(m => m.result !== null);
+    return allResultsEntered && prevRound.completed;
+}
+
+// Get info about previous round status for UI
+function getPreviousRoundInfo(roundIndex) {
+    if (roundIndex === 0) return null;
+    
+    const prevRound = tournament.rounds[roundIndex - 1];
+    if (!prevRound) return null;
+    
+    const totalMatches = prevRound.matches ? prevRound.matches.length : 0;
+    const completedMatches = prevRound.matches ? prevRound.matches.filter(m => m.result !== null).length : 0;
+    const pendingMatches = totalMatches - completedMatches;
+    
+    return {
+        name: prevRound.name,
+        totalMatches,
+        completedMatches,
+        pendingMatches,
+        isCompleted: prevRound.completed,
+        isDrawDone: prevRound.drawCompleted
+    };
+}
+
 // The actual draw logic - creates EXACTLY N/2 matches
 // Each participant appears ONLY ONCE
+// Only winners from previous round participate
 function performDraw(round) {
     // === SAFETY CHECKS ===
     
@@ -732,20 +771,36 @@ function performDraw(round) {
         return false;
     }
     
+    // Check previous round is completed
+    const roundIndex = tournament.rounds.indexOf(round);
+    if (!isPreviousRoundCompleted(roundIndex)) {
+        const prevInfo = getPreviousRoundInfo(roundIndex);
+        if (prevInfo) {
+            showNotification(`⛔ Önce "${prevInfo.name}" tamamlanmalı! (${prevInfo.pendingMatches} maç sonucu bekliyor)`, 'error');
+        }
+        return false;
+    }
+    
     isDrawInProgress = true;
     
     try {
-        // Get eligible (non-eliminated) players
+        // Get eligible (non-eliminated) players = winners from previous rounds
         const eligible = tournament.participants.filter(p => !p.eliminated);
         
         if (eligible.length < 2) {
             round.completed = true;
             round.drawCompleted = true;
             console.log(`⚠️ ${round.name}: Yeterli oyuncu yok (${eligible.length})`);
+            if (eligible.length === 1) {
+                showNotification(`🏆 ${eligible[0].name} şampiyon!`, 'success');
+            }
             return false;
         }
         
         console.log(`🎲 ${round.name}: ${eligible.length} oyuncu ile çekiliş yapılıyor...`);
+        if (roundIndex > 0) {
+            console.log(`   (Bunlar ${tournament.rounds[roundIndex - 1].name} galipleri)`);
+        }
         
         // Shuffle (Fisher-Yates)
         const shuffled = [...eligible];
@@ -802,12 +857,32 @@ function performDraw(round) {
     }
 }
 
-// Manual draw by admin - WITH confirmation and GitHub save
+// Manual draw by admin - WITH confirmation, previous round check, and GitHub save
 async function manualDrawRound(index) {
     const round = tournament.rounds[index];
     
-    if (tournament.participants.filter(p => !p.eliminated).length < 2) {
-        showNotification('En az 2 aktif katılımcı olmalı!', 'error'); return;
+    // Check previous round completion
+    if (!isPreviousRoundCompleted(index)) {
+        const prevInfo = getPreviousRoundInfo(index);
+        if (prevInfo) {
+            if (!prevInfo.isDrawDone) {
+                showNotification(`⛔ Önce "${prevInfo.name}" çekilişi yapılmalı!`, 'error');
+            } else {
+                showNotification(`⛔ Önce "${prevInfo.name}" tüm maç sonuçları girilmeli! (${prevInfo.pendingMatches}/${prevInfo.totalMatches} bekliyor)`, 'error');
+            }
+        }
+        return;
+    }
+    
+    const eligible = tournament.participants.filter(p => !p.eliminated);
+    
+    if (eligible.length < 2) {
+        if (eligible.length === 1) {
+            showNotification(`🏆 ${eligible[0].name} zaten şampiyon! Çekiliş gerekmez.`, 'success');
+        } else {
+            showNotification('En az 2 aktif katılımcı olmalı!', 'error');
+        }
+        return;
     }
     
     if (round.drawCompleted || (round.matches && round.matches.length > 0)) {
@@ -818,12 +893,15 @@ async function manualDrawRound(index) {
         showNotification('Bu tur zaten tamamlandı!', 'error'); return;
     }
     
-    const eligible = tournament.participants.filter(p => !p.eliminated);
     const matchCount = Math.floor(eligible.length / 2);
     
-    if (!confirm(`🎲 "${round.name}" için çekiliş yapılacak.\n\n${eligible.length} oyuncu → ${matchCount} eşleşme\n\nDevam etmek istiyor musunuz?`)) {
-        return;
+    let confirmMsg = `🎲 "${round.name}" için çekiliş yapılacak.\n\n`;
+    if (index > 0) {
+        confirmMsg += `📋 ${tournament.rounds[index - 1].name} galipleri arasından:\n`;
     }
+    confirmMsg += `${eligible.length} oyuncu → ${matchCount} eşleşme\n\nDevam etmek istiyor musunuz?`;
+    
+    if (!confirm(confirmMsg)) return;
     
     const success = performDraw(round);
     
@@ -1212,35 +1290,67 @@ function updateManualDrawSection() {
         const now = new Date();
         const isDrawDone = round.drawCompleted && round.matches && round.matches.length > 0;
         const isPast = now >= drawDate;
+        const prevCompleted = isPreviousRoundCompleted(index);
+        const prevInfo = getPreviousRoundInfo(index);
         const eligible = tournament.participants.filter(p => !p.eliminated).length;
         
-        let statusText, statusColor;
+        // Determine status
+        let statusText, statusColor, extraInfo = '';
+        
         if (isDrawDone) {
+            // Draw already done
+            const resultsEntered = round.matches.filter(m => m.result !== null).length;
             statusText = `✅ Çekiliş yapıldı (${round.matches.length} eşleşme)`;
             statusColor = '#28a745';
+            if (resultsEntered < round.matches.length) {
+                extraInfo = `<br><span style="color: #ffc107;">📝 Sonuç: ${resultsEntered}/${round.matches.length} girildi</span>`;
+            } else if (round.completed) {
+                extraInfo = `<br><span style="color: #28a745;">✅ Tüm sonuçlar girildi</span>`;
+            }
+        } else if (!prevCompleted && index > 0) {
+            // Previous round not done - BLOCKED
+            if (!prevInfo.isDrawDone) {
+                statusText = `🔒 Önce "${prevInfo.name}" çekilişi yapılmalı`;
+            } else {
+                statusText = `🔒 Önce "${prevInfo.name}" sonuçları girilmeli (${prevInfo.pendingMatches}/${prevInfo.totalMatches} bekliyor)`;
+            }
+            statusColor = '#dc3545';
+            extraInfo = `<br><span style="color: #764ba2;">👥 ${prevInfo.name} galipleri bu tura katılacak</span>`;
         } else if (isPast) {
             statusText = '⚠️ Çekiliş zamanı geçti - Manuel yapabilirsiniz';
             statusColor = '#ffc107';
+            if (index > 0) {
+                extraInfo = `<br><span style="color: #764ba2;">👥 ${eligible} galip bu turda yarışacak</span>`;
+            }
         } else {
             statusText = '⏳ Bekleniyor';
             statusColor = '#6c757d';
         }
         
+        // Determine button state
+        const canDraw = !isDrawDone && prevCompleted && eligible >= 2;
+        const isBlocked = !prevCompleted && index > 0;
+        
         content += `
-            <div class="manual-draw-item ${isDrawDone ? 'completed' : ''}" style="flex-wrap: wrap;">
+            <div class="manual-draw-item ${isDrawDone ? 'completed' : ''}" style="flex-wrap: wrap; ${isBlocked ? 'opacity: 0.7; border-left-color: #dc3545;' : ''}">
                 <div class="manual-draw-text" style="flex: 1; min-width: 200px;">
                     <strong>${round.name}</strong><br>
                     <span style="font-size: 0.9em; color: #764ba2;">📅 ${drawDate.toLocaleString('tr-TR')}</span><br>
                     <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>
+                    ${extraInfo}
                 </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    ${!isDrawDone ? `
-                        <button onclick="manualDrawRound(${index})" class="manual-draw-btn" ${eligible < 2 ? 'disabled title="En az 2 oyuncu gerekli"' : ''}>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    ${isDrawDone ? `
+                        <button onclick="resetDrawRound(${index})" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s;">
+                            🔄 Çekilişi Sıfırla
+                        </button>
+                    ` : canDraw ? `
+                        <button onclick="manualDrawRound(${index})" class="manual-draw-btn">
                             🎲 Çekiliş Yap (${eligible} kişi → ${Math.floor(eligible/2)} maç)
                         </button>
                     ` : `
-                        <button onclick="resetDrawRound(${index})" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s;">
-                            🔄 Çekilişi Sıfırla
+                        <button disabled class="manual-draw-btn" title="${isBlocked ? 'Önceki tur tamamlanmalı' : 'Yeterli oyuncu yok'}">
+                            🔒 ${isBlocked ? 'Önceki tur bekleniyor' : 'Çekiliş yapılamaz'}
                         </button>
                     `}
                 </div>
