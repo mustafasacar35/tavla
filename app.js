@@ -14,11 +14,25 @@ let isAdminLoggedIn = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    loadData();
+    loadDataFromGitHub();
     initializeTournament();
     startCountdown();
     setInterval(checkAndRun, 10000); // Check every 10 seconds for draws
 });
+
+// Load data from GitHub
+async function loadDataFromGitHub() {
+    try {
+        const url = 'https://raw.githubusercontent.com/mustafasacar35/tavla/main/data.json';
+        const response = await fetch(url);
+        const data = await response.json();
+        tournament = data;
+        saveData(); // Save to localStorage as backup
+    } catch (error) {
+        console.log('GitHub\'dan load edilemedi, localStorage\'dan yükleniyor', error);
+        loadData();
+    }
+}
 
 // Load data from localStorage or create new
 function loadData() {
