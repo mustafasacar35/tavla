@@ -1,0 +1,405 @@
+{
+  "name": "Denizli Cerrahisi Hastanesi 1. Geleneksel Tavla Turnuvası",
+  "adminPassword": "1234",
+  "currentRound": 1,
+  "totalRounds": 3,
+  "rounds": [
+    {
+      "id": 1,
+      "name": "1. Tur",
+      "roundNumber": 1,
+      "drawDate": "2026-04-03T09:35:00Z",
+      "completed": false,
+      "drawCompleted": true,
+      "matches": [
+        {
+          "id": "match_1_1",
+          "player1Id": 16,
+          "player2Id": 20,
+          "result": null
+        },
+        {
+          "id": "match_1_2",
+          "player1Id": 24,
+          "player2Id": 21,
+          "result": null
+        },
+        {
+          "id": "match_1_3",
+          "player1Id": 29,
+          "player2Id": 2,
+          "result": null
+        },
+        {
+          "id": "match_1_4",
+          "player1Id": 4,
+          "player2Id": 26,
+          "result": null
+        },
+        {
+          "id": "match_1_5",
+          "player1Id": 15,
+          "player2Id": 6,
+          "result": null
+        },
+        {
+          "id": "match_1_6",
+          "player1Id": 22,
+          "player2Id": 1,
+          "result": null
+        },
+        {
+          "id": "match_1_7",
+          "player1Id": 5,
+          "player2Id": 12,
+          "result": null
+        },
+        {
+          "id": "match_1_8",
+          "player1Id": 17,
+          "player2Id": 30,
+          "result": null
+        },
+        {
+          "id": "match_1_9",
+          "player1Id": 23,
+          "player2Id": 28,
+          "result": null
+        },
+        {
+          "id": "match_1_10",
+          "player1Id": 31,
+          "player2Id": 7,
+          "result": null
+        },
+        {
+          "id": "match_1_11",
+          "player1Id": 32,
+          "player2Id": 11,
+          "result": null
+        },
+        {
+          "id": "match_1_12",
+          "player1Id": 33,
+          "player2Id": 34,
+          "result": null
+        },
+        {
+          "id": "match_1_13",
+          "player1Id": 3,
+          "player2Id": 9,
+          "result": null
+        },
+        {
+          "id": "match_1_14",
+          "player1Id": 18,
+          "player2Id": 10,
+          "result": null
+        },
+        {
+          "id": "match_1_15",
+          "player1Id": 19,
+          "player2Id": 14,
+          "result": null
+        },
+        {
+          "id": "match_1_16",
+          "player1Id": 8,
+          "player2Id": 35,
+          "result": null
+        },
+        {
+          "id": "match_1_17",
+          "player1Id": 36,
+          "player2Id": 25,
+          "result": null
+        },
+        {
+          "id": "match_1_18",
+          "player1Id": 13,
+          "player2Id": 27,
+          "result": null,
+          "scheduledDate": "2026-04-06T09:30:00.000Z",
+          "scheduledLocation": "6. Kat"
+        }
+      ],
+      "createWinnerRound": true
+    },
+    {
+      "id": 2,
+      "name": "2. Tur",
+      "roundNumber": 2,
+      "drawDate": "2026-04-06T17:00:00Z",
+      "completed": false,
+      "drawCompleted": false,
+      "matches": [],
+      "createWinnerRound": true
+    },
+    {
+      "id": 3,
+      "name": "3. Tur",
+      "roundNumber": 3,
+      "drawDate": "2026-04-07T17:00:00Z",
+      "completed": false,
+      "drawCompleted": false,
+      "matches": [],
+      "createWinnerRound": false
+    }
+  ],
+  "participants": [
+    {
+      "id": 1,
+      "name": "Ozan TÜRKMENOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 2,
+      "name": "Mustafa Faik BAKAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 3,
+      "name": "Suat GENCER",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 4,
+      "name": "Deniz EKREN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 5,
+      "name": "Nazmi Yaşar SAYIM",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 6,
+      "name": "Eylül DAŞÇI BOZDEMİR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 7,
+      "name": "TUNA KENAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 8,
+      "name": "Ferit ÖZEN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 9,
+      "name": "Ömer Levent TUNCAY",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 10,
+      "name": "Mustafa AĞAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 11,
+      "name": "Uğur DİDİN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 12,
+      "name": "Uğur AKTI",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 13,
+      "name": "İbrahim ÖZDEŞ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 14,
+      "name": "Muhammet İBRAHİMOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 15,
+      "name": "Bülent Kamil AYKAL",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 16,
+      "name": "Erdal COŞKUN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 17,
+      "name": "Bilal ÖZDEMİR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 18,
+      "name": "Nazım KARALEZLİ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 19,
+      "name": "Umut FAYDACI",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 20,
+      "name": "Yücel YÜCE",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 21,
+      "name": "Hasan AKŞIK",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 22,
+      "name": "Taner DEĞİRMENCİ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 23,
+      "name": "Çağdaş ERDOĞAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 24,
+      "name": "Zeynep ARSLANTAŞ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 25,
+      "name": "Cemalettin Serhad AKSOY",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 26,
+      "name": "İSMAİL ÇELİK",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 27,
+      "name": "Mustafa SAÇAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 28,
+      "name": "Ömer Erhan KARAHASANOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 29,
+      "name": "Yusuf İ. İLHANOĞLU",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 30,
+      "name": "Süleyman KAYIK",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 31,
+      "name": "Nilgün ŞİMŞİR ATALAY",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 32,
+      "name": "İbrahim OĞUZ",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 33,
+      "name": "Şefik TARLAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 34,
+      "name": "Volkan ÇINAR",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 35,
+      "name": "Osman İLHAN",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    },
+    {
+      "id": 36,
+      "name": "Alper BAŞAKCI",
+      "wins": 0,
+      "losses": 0,
+      "eliminated": false
+    }
+  ],
+  "standings": [],
+  "lastUpdated": "2026-04-03T16:06:46.487Z"
+}
