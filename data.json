@@ -18,7 +18,7 @@
           "player2Id": 20,
           "result": {
             "player1Score": 0,
-            "player2Score": 0,
+            "player2Score": 1,
             "winner": 20
           }
         },
@@ -191,8 +191,7 @@
       "name": "Eylül DAŞÇI BOZDEMİR",
       "wins": 0,
       "losses": 0,
-      "eliminated": false,
-      "gender": "female"
+      "eliminated": false
     },
     {
       "id": 7,
@@ -318,8 +317,7 @@
       "name": "Zeynep ARSLANTAŞ",
       "wins": 0,
       "losses": 0,
-      "eliminated": false,
-      "gender": "female"
+      "eliminated": false
     },
     {
       "id": 25,
@@ -368,8 +366,7 @@
       "name": "Nilgün ŞİMŞİR ATALAY",
       "wins": 0,
       "losses": 0,
-      "eliminated": false,
-      "gender": "female"
+      "eliminated": false
     },
     {
       "id": 32,
@@ -408,5 +405,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-03T16:30:49.489Z"
+  "lastUpdated": "2026-04-03T16:34:48.389Z"
 }
