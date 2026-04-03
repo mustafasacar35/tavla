@@ -412,7 +412,6 @@ function updateCurrentRound() {
             `;
             
             matchesContainer.appendChild(card);
-            playNotificationSound();
         }, index * 300); // Her 300ms'de bir maç ekle
     });
 }
