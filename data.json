@@ -46,7 +46,11 @@
           "id": "match_1_6",
           "player1Id": 22,
           "player2Id": 1,
-          "result": null
+          "result": {
+            "player1Score": 1,
+            "player2Score": 0,
+            "winner": 22
+          }
         },
         {
           "id": "match_1_7",
@@ -82,7 +86,11 @@
           "id": "match_1_12",
           "player1Id": 33,
           "player2Id": 34,
-          "result": null
+          "result": {
+            "player1Score": 1,
+            "player2Score": 0,
+            "winner": 33
+          }
         },
         {
           "id": "match_1_13",
@@ -120,14 +128,14 @@
           "player2Id": 27,
           "result": null,
           "scheduledDate": "2026-04-06T09:30:00.000Z",
-          "scheduledLocation": "6. kat"
+          "scheduledLocation": "6. Kat"
         }
       ],
       "createWinnerRound": true
     },
     {
       "id": 2,
-      "name": "Yarı Final",
+      "name": "2. Tur",
       "roundNumber": 2,
       "drawDate": "2026-04-06T17:00:00Z",
       "completed": false,
@@ -137,7 +145,7 @@
     },
     {
       "id": 3,
-      "name": "Final",
+      "name": "3. Tur",
       "roundNumber": 3,
       "drawDate": "2026-04-07T17:00:00Z",
       "completed": false,
@@ -151,7 +159,7 @@
       "id": 1,
       "name": "Ozan TÜRKMENOĞLU",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -297,7 +305,7 @@
     {
       "id": 22,
       "name": "Taner DEĞİRMENCİ",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -374,7 +382,7 @@
     {
       "id": 33,
       "name": "Şefik TARLAN",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -382,7 +390,7 @@
       "id": 34,
       "name": "Volkan ÇINAR",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -401,5 +409,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-03T17:01:36.825Z"
+  "lastUpdated": "2026-04-06T19:40:59.527Z"
 }
