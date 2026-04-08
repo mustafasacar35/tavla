@@ -112,7 +112,11 @@
           "id": "match_1_13",
           "player1Id": 3,
           "player2Id": 9,
-          "result": null
+          "result": {
+            "player1Score": 1,
+            "player2Score": 0,
+            "winner": 3
+          }
         },
         {
           "id": "match_1_14",
@@ -188,7 +192,7 @@
     {
       "id": 3,
       "name": "Suat GENCER",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -231,7 +235,7 @@
       "id": 9,
       "name": "Ömer Levent TUNCAY",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -425,5 +429,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-08T17:09:19.586Z"
+  "lastUpdated": "2026-04-08T17:09:29.711Z"
 }
