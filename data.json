@@ -128,7 +128,11 @@
           "id": "match_1_15",
           "player1Id": 19,
           "player2Id": 14,
-          "result": null
+          "result": {
+            "player1Score": 1,
+            "player2Score": 0,
+            "winner": 19
+          }
         },
         {
           "id": "match_1_16",
@@ -270,7 +274,7 @@
       "id": 14,
       "name": "Muhammet İBRAHİMOĞLU",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -304,7 +308,7 @@
     {
       "id": 19,
       "name": "Umut FAYDACI",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -429,5 +433,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-08T17:09:29.711Z"
+  "lastUpdated": "2026-04-08T17:09:44.220Z"
 }
