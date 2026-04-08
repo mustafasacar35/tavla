@@ -26,7 +26,11 @@
           "id": "match_1_2",
           "player1Id": 24,
           "player2Id": 21,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 21
+          }
         },
         {
           "id": "match_1_3",
@@ -302,7 +306,7 @@
     {
       "id": 21,
       "name": "Hasan AKŞIK",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -324,7 +328,7 @@
       "id": 24,
       "name": "Zeynep ARSLANTAŞ",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -413,5 +417,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-08T17:06:52.319Z"
+  "lastUpdated": "2026-04-08T17:07:29.559Z"
 }
