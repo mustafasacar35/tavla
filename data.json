@@ -92,7 +92,11 @@
           "id": "match_1_11",
           "player1Id": 32,
           "player2Id": 11,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 11
+          }
         },
         {
           "id": "match_1_12",
@@ -240,7 +244,7 @@
     {
       "id": 11,
       "name": "Uğur DİDİN",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -388,7 +392,7 @@
       "id": 32,
       "name": "İbrahim OĞUZ",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -421,5 +425,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-08T17:08:32.316Z"
+  "lastUpdated": "2026-04-08T17:09:19.586Z"
 }
