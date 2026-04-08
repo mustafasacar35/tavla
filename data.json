@@ -16,7 +16,11 @@
           "id": "match_1_1",
           "player1Id": 16,
           "player2Id": 20,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 20
+          }
         },
         {
           "id": "match_1_2",
@@ -264,7 +268,7 @@
       "id": 16,
       "name": "Erdal COŞKUN",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -291,7 +295,7 @@
     {
       "id": 20,
       "name": "Yücel YÜCE",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -409,5 +413,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-06T19:40:59.527Z"
+  "lastUpdated": "2026-04-08T17:06:52.319Z"
 }
