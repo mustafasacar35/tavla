@@ -42,7 +42,11 @@
           "id": "match_1_4",
           "player1Id": 4,
           "player2Id": 26,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 26
+          }
         },
         {
           "id": "match_1_5",
@@ -188,7 +192,7 @@
       "id": 4,
       "name": "Deniz EKREN",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -341,7 +345,7 @@
     {
       "id": 26,
       "name": "İSMAİL ÇELİK",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -417,5 +421,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-08T17:07:29.559Z"
+  "lastUpdated": "2026-04-08T17:08:32.316Z"
 }
