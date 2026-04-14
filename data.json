@@ -74,7 +74,11 @@
           "id": "match_1_8",
           "player1Id": 17,
           "player2Id": 30,
-          "result": null
+          "result": {
+            "player1Score": 1,
+            "player2Score": 0,
+            "winner": 17
+          }
         },
         {
           "id": "match_1_9",
@@ -298,7 +302,7 @@
     {
       "id": 17,
       "name": "Bilal ÖZDEMİR",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -390,7 +394,7 @@
       "id": 30,
       "name": "Süleyman KAYIK",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -437,5 +441,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-08T17:09:56.841Z"
+  "lastUpdated": "2026-04-14T21:41:29.887Z"
 }
