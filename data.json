@@ -146,7 +146,11 @@
           "id": "match_1_16",
           "player1Id": 8,
           "player2Id": 35,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 35
+          }
         },
         {
           "id": "match_1_17",
@@ -244,7 +248,7 @@
       "id": 8,
       "name": "Ferit ÖZEN",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -432,7 +436,7 @@
     {
       "id": 35,
       "name": "Osman İLHAN",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -445,5 +449,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-17T13:57:13.942Z"
+  "lastUpdated": "2026-04-17T14:00:20.917Z"
 }
