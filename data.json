@@ -160,7 +160,11 @@
           "id": "match_1_17",
           "player1Id": 36,
           "player2Id": 25,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 25
+          }
         },
         {
           "id": "match_1_18",
@@ -370,7 +374,7 @@
     {
       "id": 25,
       "name": "Cemalettin Serhad AKSOY",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -448,10 +452,10 @@
       "id": 36,
       "name": "Alper BAŞAKCI",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-17T14:01:32.945Z"
+  "lastUpdated": "2026-04-17T14:04:15.627Z"
 }
