@@ -68,7 +68,11 @@
           "id": "match_1_7",
           "player1Id": 5,
           "player2Id": 12,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 12
+          }
         },
         {
           "id": "match_1_8",
@@ -126,11 +130,7 @@
           "id": "match_1_14",
           "player1Id": 18,
           "player2Id": 10,
-          "result": {
-            "player1Score": 0,
-            "player2Score": 1,
-            "winner": 10
-          }
+          "result": null
         },
         {
           "id": "match_1_15",
@@ -146,11 +146,7 @@
           "id": "match_1_16",
           "player1Id": 8,
           "player2Id": 35,
-          "result": {
-            "player1Score": 0,
-            "player2Score": 1,
-            "winner": 35
-          }
+          "result": null
         },
         {
           "id": "match_1_17",
@@ -227,7 +223,7 @@
       "id": 5,
       "name": "Nazmi Yaşar SAYIM",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -248,7 +244,7 @@
       "id": 8,
       "name": "Ferit ÖZEN",
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "eliminated": false
     },
     {
@@ -261,7 +257,7 @@
     {
       "id": 10,
       "name": "Mustafa AĞAR",
-      "wins": 1,
+      "wins": 0,
       "losses": 0,
       "eliminated": false
     },
@@ -275,7 +271,7 @@
     {
       "id": 12,
       "name": "Uğur AKTI",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -318,7 +314,7 @@
       "id": 18,
       "name": "Nazım KARALEZLİ",
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "eliminated": false
     },
     {
@@ -436,7 +432,7 @@
     {
       "id": 35,
       "name": "Osman İLHAN",
-      "wins": 1,
+      "wins": 0,
       "losses": 0,
       "eliminated": false
     },
@@ -449,5 +445,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-15T12:44:09.239Z"
+  "lastUpdated": "2026-04-17T13:57:13.942Z"
 }
