@@ -130,7 +130,11 @@
           "id": "match_1_14",
           "player1Id": 18,
           "player2Id": 10,
-          "result": null
+          "result": {
+            "player1Score": 0,
+            "player2Score": 1,
+            "winner": 10
+          }
         },
         {
           "id": "match_1_15",
@@ -261,7 +265,7 @@
     {
       "id": 10,
       "name": "Mustafa AĞAR",
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "eliminated": false
     },
@@ -318,7 +322,7 @@
       "id": 18,
       "name": "Nazım KARALEZLİ",
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "eliminated": false
     },
     {
@@ -449,5 +453,5 @@
     }
   ],
   "standings": [],
-  "lastUpdated": "2026-04-17T14:00:20.917Z"
+  "lastUpdated": "2026-04-17T14:01:32.945Z"
 }
